@@ -1,0 +1,372 @@
+====================================================================================================
+                        TỔNG HỢP TOÀN DIỆN DỰ ÁN: HỆ THỐNG AI PHÂN TÍCH &
+                        PHÂN LOẠI CẢM XÚC BÌNH LUẬN XE HƠI TIẾNG VIỆT
+              (End-to-End Vietnamese Automotive Sentiment Analysis & AI Intelligence)
+====================================================================================================
+
+Dự án được xây dựng theo chuẩn MLOps hoàn chỉnh từ giai đoạn thu thập dữ liệu thực tế (Data Crawling),
+làm sạch & tiền xử lý (Data Cleaning & Preprocessing), gán nhãn tự động (Pseudo-Labeling), phân chia 
+tập Train/Test, huấn luyện & tối ưu mô hình PhoBERT với Weighted Loss, đóng gói REST API Microservice 
+(FastAPI), xây dựng giao diện Web 3D Cockpit (Flask), cùng 2 tính năng nâng cao: Trợ lý AI Phân tích 
+Chuyên sâu (Gemini Deep Analyst) và Xử lý Tệp Dữ liệu Hàng loạt (Bulk Analyst).
+
+----------------------------------------------------------------------------------------------------
+MỤC LỤC
+----------------------------------------------------------------------------------------------------
+PHẦN 1: QUY TRÌNH THU THẬP DỮ LIỆU THỰC TẾ (DATA CRAWLING PIPELINE)
+PHẦN 2: TIỀN XỬ LÝ DỮ LIỆU, LỌC RÁC & GÁN NHÃN TỰ ĐỘNG (DATA PREPROCESSING & AUTO-LABELING)
+PHẦN 3: PHÂN CHIA TẬP DỮ LIỆU TRAIN (80%) / TEST (20%) (STRATIFIED SPLIT)
+PHẦN 4: THIẾT KẾ, HUẤN LUYỆN & TỐI ƯU MÔ HÌNH AI (PHOBERT FINE-TUNING & METRICS)
+PHẦN 5: ĐÓNG GÓI REST API MICROSERVICE CHUẨN DOANH NGHIỆP (FASTAPI)
+PHẦN 6: THIẾT KẾ GIAO DIỆN WEB 3D COCKPIT & CƠ CHẾ F5 PERSISTENCE (FLASK WEB UI)
+PHẦN 7: TÍNH NĂNG NÂNG CAO 1 - AI SUGGEST (GEMINI 3.1 FLASH LITE DEEP ANALYST)
+PHẦN 8: TÍNH NĂNG NÂNG CAO 2 - BULK ANALYST (PHÂN TÍCH HÀNG LOẠT VỚI SINGLE PROCESS LOCK)
+PHẦN 9: KIỂM THỬ THỰC TẾ & BỘ TEST BIÊN (EDGE CASES & VALIDATION)
+PHẦN 10: CẤU TRÚC THƯ MỤC & DANH MỤC TỆP TIN CỐT LÕI (PROJECT ARCHITECTURE)
+
+====================================================================================================
+PHẦN 1: QUY TRÌNH THU THẬP DỮ LIỆU THỰC TẾ (DATA CRAWLING PIPELINE)
+====================================================================================================
+
+Dữ liệu bình luận được thu thập từ các nhóm, cộng đồng và Fanpage mạng xã hội Facebook về ô tô tại 
+Việt Nam (như Hội VinFast VF3, VF8, Mazda CX-5 Club, Toyota Vios Club, Otosaigon, Otofun...). 
+Quy trình thu thập gồm 2 bước phối hợp:
+
+1.1. Thu thập danh sách bài viết Facebook (Facebook Posts Crawling via SerpApi):
+- Vị trí mã nguồn: data_processing/crawl_fb_post_by_serp/crawl_fb_post.py
+- Phương thức: Sử dụng Google Search qua SerpApi để tìm kiếm các bài viết Facebook thảo luận về ô tô.
+- Cấu hình truy vấn:
+  + Danh sách 24 dòng xe phổ biến tại Việt Nam: VinFast VF3, VF5, VF7, VF8, VF9; Mazda CX-5, Mazda 3;
+    Hyundai Santa Fe, Tucson, Accent, Creta; Honda CR-V, City; Toyota Vios, Veloz, Fortuner, Corolla Cross;
+    Kia Seltos, K3, Carnival, Sonet; Mitsubishi Xpander; Ford Everest, Ranger.
+  + Kết hợp các chủ đề phản ánh thực tế: "đánh giá ưu nhược điểm", "trải nghiệm thực tế", "lỗi thường gặp",
+    "chi phí nuôi xe bảo dưỡng", "khen chê chia sẻ kinh nghiệm".
+- Kết quả: Xuất ra tệp `facebook_car_posts.csv` chứa danh sách link bài viết (URL), tiêu đề, đoạn trích (snippet).
+
+1.2. Thu thập bình luận chi tiết bài viết (Facebook Comments Crawling via Bright Data):
+- Vị trí mã nguồn: data_processing/crawl_fb_comment_by_bright_data/crawl_fb_cmt.py
+- Phương thức: Tích hợp Bright Data Datasets Trigger API (Facebook Comments Scraper).
+- Cơ chế quản lý API Key & Dataset ID:
+  + Hỗ trợ cấu hình qua file `bright_data_api_key.txt` hoặc biến môi trường `BRIGHT_DATA_PAIRS`.
+  + Quản lý theo từng CẶP (API_KEY : DATASET_ID) tương ứng.
+  + Tự động xoay tua (Auto-Rotation) khi key hết credit hoặc gặp lỗi xác thực, chuyển sang key tiếp theo.
+- Xử lý kỹ thuật:
+  + Gửi yêu cầu trigger cào bình luận theo danh sách URL bài viết.
+  + Polling kiểm tra tiến độ qua endpoint `progress/{snapshot_id}` cho đến khi hoàn tất.
+  + Tải snapshot dữ liệu và chuẩn hóa encoding để giữ nguyên 100% tiếng Việt có dấu chuẩn UTF-8.
+- Kết quả: Xuất ra tệp dữ liệu thô ban đầu `facebook_car_comments.csv`.
+
+====================================================================================================
+PHẦN 2: TIỀN XỬ LÝ DỮ LIỆU, LỌC RÁC & GÁN NHÃN TỰ ĐỘNG (PREPROCESSING & AUTO-LABELING)
+====================================================================================================
+
+Dữ liệu thô cào từ Facebook chứa rất nhiều tạp âm, spam bán xe và chưa có nhãn cảm xúc. Module tiền 
+xử lý thực hiện 2 công đoạn chính:
+
+2.1. Bộ lọc rác & làm sạch thông minh (Data Cleaning & Noise Filtering):
+- Vị trí mã nguồn: data_processing/crawl_fb_comment_by_bright_data/clean_comments.py
+- Chuẩn hóa mã hóa: Toàn bộ văn bản được đưa về định dạng Unicode chuẩn NFC (`unicodedata.normalize('NFC', text)`).
+- 4 lớp lọc rác phòng thủ:
+  1. Lọc bình luận rỗng hoặc chỉ toàn ký tự trắng/tab/xuống dòng.
+  2. Lọc bình luận chỉ chứa dấu câu hoặc ký tự đặc biệt lặp lại (ví dụ: '.', '...', '?', '!', '@@@').
+  3. Lọc bình luận "chấm hóng" phổ biến trên mạng xã hội Facebook (ví dụ: "chấm", "cham", "hóng", "hóng hớt").
+  4. Lọc bình luận spam cò mồi bán xe / quảng cáo đại lý: Sử dụng Regex nhận diện số điện thoại 
+     (`(\+?84|0)(3|5|7|8|9)\d{8}`) kết hợp từ khóa mời chào ("ib em", "lh em", "báo giá lăn bánh",
+     "chiết khấu", "hỗ trợ trả góp", "check inbox"...).
+- Kết quả: Loại bỏ các dòng rác và tạo tệp dữ liệu sạch `facebook_car_comments_clean.csv`.
+
+2.2. Gán nhãn tự động bằng AI (Pseudo-Labeling / Auto-Labeling):
+- Vị trí mã nguồn: build_AI_model/label_and_split.py
+- Bài toán: Việc gán nhãn thủ công hàng nghìn bình luận mất nhiều ngày và dễ thiếu nhất quán.
+- Giải pháp: Sử dụng mô hình Deep Learning PhoBERT pre-trained cho tiếng Việt để phân loại và gán nhãn tự động:
+  + `POS` (TÍCH CỰC): Khen ngợi cảm giác lái, tiết kiệm điện, cách âm tốt, thiết kế đẹp, phanh nhạy...
+  + `NEG` (TIÊU CỰC): Phàn nàn lỗi pin, màn hình đơ, rung lắc khi chạy nhanh, cứu hộ chậm, bảo hành kém...
+  + `NEU` (TRUNG TÍNH): Bình luận hỏi giá lăn bánh, hỏi thủ tục trả góp, so sánh thông số kỹ thuật...
+- Kết quả: Gán nhãn thành công cho toàn bộ 6.296 bình luận sạch với độ tin cậy trung bình đạt 87.48%,
+  xuất ra tệp `build_AI_model/data/facebook_car_comments_labeled.csv`.
+
+====================================================================================================
+PHẦN 3: PHÂN CHIA TẬP DỮ LIỆU TRAIN (80%) / TEST (20%) (STRATIFIED SPLIT)
+====================================================================================================
+
+- Vị trí mã nguồn: build_AI_model/split_train_test.py
+- Phương pháp phân chia: Áp dụng kỹ thuật **Stratified Sampling** (với `random_state=42`) nhằm bảo tồn
+  chính xác tỷ lệ phân bố cảm xúc giữa tập Train và tập Test.
+- Tổng số mẫu: 6.296 bình luận.
+  + Tập Train (80%): 5.036 dòng (`build_AI_model/data/train.csv`)
+  + Tập Test  (20%): 1.260 dòng (`build_AI_model/data/test.csv`)
+
+- Tỷ lệ phân bố các lớp cảm xúc đạt độ cân bằng tuyệt đối:
+  + Lớp TÍCH CỰC (POS) : Toàn bộ 42.84% -> Tập Train: 42.83% (2.157 mẫu) -> Tập Test: 42.86% (540 mẫu)
+  + Lớp TRUNG TÍNH (NEU): Toàn bộ 30.99% -> Tập Train: 31.00% (1.561 mẫu) -> Tập Test: 30.95% (390 mẫu)
+  + Lớp TIÊU CỰC (NEG) : Toàn bộ 26.18% -> Tập Train: 26.17% (1.318 mẫu) -> Tập Test: 26.19% (330 mẫu)
+
+- Chuẩn hóa 6 cột cốt lõi của tập dữ liệu:
+  1. `comment_text`    : Nội dung bình luận tiếng Việt đã được làm sạch.
+  2. `sentiment_label` : Nhãn hiển thị tiếng Việt ("TÍCH CỰC", "TIÊU CỰC", "TRUNG TÍNH").
+  3. `sentiment`       : Mã định danh nhãn ("POS", "NEG", "NEU").
+  4. `confidence_score`: Điểm tự tin của dự đoán (từ 0.00 đến 1.00).
+  5. `url`             : Đường dẫn trực tiếp đến bình luận Facebook.
+  6. `post_url`        : Đường dẫn đến bài viết Facebook gốc.
+
+====================================================================================================
+PHẦN 4: THIẾT KẾ, HUẤN LUYỆN & TỐI ƯU MÔ HÌNH AI (PHOBERT FINE-TUNING & METRICS)
+====================================================================================================
+
+4.1. Lựa chọn kiến trúc mô hình:
+- Mô hình nền tảng: `wonrax/phobert-base-vietnamese-sentiment` (kiến trúc RoBERTa-base phát triển bởi VinAI).
+- Lý do chọn PhoBERT:
+  + Được huấn luyện trước trên 20GB văn bản tiếng Việt chuẩn ngữ pháp.
+  + Cơ chế Self-Attention đa tầng bắt trọn ngữ cảnh phức tạp, cấu trúc câu đảo ngữ và phủ định tiếng Việt
+    (ví dụ: "xe tưởng không ngon mà ngon không tưởng", "chả ra cái tích sự gì").
+  + Nắm bắt tự nhiên từ lóng mạng xã hội và thuật ngữ ô tô ("bốc", "đầm", "lăn bánh", "vkl", "ăn xăng").
+  + Tốc độ suy luận siêu tốc: chỉ mất ~15 - 25ms cho mỗi câu trên GPU (NVIDIA CUDA) và ~35ms trên CPU.
+
+4.2. Chiến lược Loss Function - Weighted Cross-Entropy Loss:
+- Vị trí mã nguồn: build_AI_model/train_model.py
+- Vấn đề nghiệp vụ: Trong ngành ô tô và xe điện, một phản ánh tiêu cực của khách hàng về lỗi pin, cháy nổ,
+  kẹt chân ga nếu bị mô hình bỏ sót (False Negative) có thể gây ra **KHỦNG HOẢNG TRUYỀN THÔNG (PR CRISIS)**
+  vô cùng nghiêm trọng cho thương hiệu.
+- Giải pháp: 
+  + Tính toán trọng số lớp nghịch đảo tần suất (Inverse Class Frequency).
+  + Áp dụng hệ số phạt tăng cường đặc biệt cho nhãn Tiêu cực: `boost_neg = 1.4`.
+  + Buổi huấn luyện phạt nặng gradient loss khi mô hình dự đoán nhầm một câu Tiêu cực sang Trung tính hoặc Tích cực.
+
+4.3. Tiêu chí đánh giá chất lượng (Evaluation Metrics):
+- **Macro F1-Score**: Tính trung bình điều hòa F1 không phân biệt kích thước lớp, đảm bảo mô hình đồng đều
+  trên cả 3 lớp cảm xúc, ngăn ngừa tình trạng mô hình thiên vị lớp chiếm số đông.
+- **Negative Recall (Độ phủ nhãn Tiêu cực)**: Chỉ số KPI quan trọng nhất trong Social Listening ô tô, 
+  đảm bảo phát hiện kịp thời trên 92% các khiếu nại của khách hàng.
+- **Precision (Độ chuẩn xác)**: Hạn chế báo động giả (False Alarm) để không làm sai lệch báo cáo khảo sát.
+
+====================================================================================================
+PHẦN 5: ĐÓNG GÓI REST API MICROSERVICE CHUẨN DOANH NGHIỆP (FASTAPI)
+====================================================================================================
+
+- Vị trí mã nguồn: build_AI_model/api.py
+- Công nghệ: FastAPI, Uvicorn, Pydantic, PyTorch CUDA. Cổng mặc định: 8000.
+- Kiến trúc Singleton Pattern: Mô hình PhoBERT được nạp 1 lần duy nhất vào bộ nhớ (GPU VRAM / RAM), 
+  phục vụ đồng thời các luồng suy luận mà không bị nạp lại gây nghẽn tài nguyên.
+
+5.1. Các Endpoints cốt lõi:
+- `GET /health`  : Kiểm tra trạng thái hoạt động của microservice và thiết bị thực thi (CUDA / CPU).
+- `POST /predict`: Phân tích cảm xúc cho 1 câu bình luận đơn lẻ.
+- `POST /predict_batch`: Phân tích cảm xúc cho 1 danh sách các câu bình luận theo mẻ (batch processing).
+- `GET /docs`    : Tài liệu tương tác trực quan Swagger UI tự động sinh bởi FastAPI.
+
+5.2. Định dạng Request / Response:
+* Request POST /predict:
+  {
+    "text": "Xe này chạy rất êm, nội thất đẹp và rất tiết kiệm điện"
+  }
+
+* Response HTTP 200 OK:
+  {
+    "text": "Xe này chạy rất êm, nội thất đẹp và rất tiết kiệm điện",
+    "cleaned_text": "Xe này chạy rất êm, nội thất đẹp và rất tiết kiệm điện",
+    "label": "TÍCH CỰC",
+    "sentiment": "POS",
+    "confidence": 0.9928,
+    "detail_scores": {
+      "POS": 0.9928,
+      "NEG": 0.0016,
+      "NEU": 0.0056
+    },
+    "warning": null,
+    "process_time_ms": 14.5
+  }
+
+5.3. Cơ chế Lập trình Phòng thủ (Defensive Programming & Edge Cases):
+- Chuỗi rỗng / toàn khoảng trắng (`""`, `"   "`): Bắt lỗi ngay tại tầng tiền xử lý và trả về HTTP 400 Bad Request.
+- Văn bản quá dài (> 2.000 ký tự): Cắt ngắn an toàn về 256 tokens của PhoBERT, trả về cờ `warning` rõ ràng,
+  triệt tiêu hoàn toàn nguy cơ tràn bộ nhớ GPU (Out-Of-Memory).
+- Văn bản chứa rác, ký tự lạ (`@@@###$$$`), HTML tags, đường link URL: Tự động lọc sạch ký tự rác trước khi suy luận.
+
+====================================================================================================
+PHẦN 6: THIẾT KẾ GIAO DIỆN WEB 3D COCKPIT & CƠ CHẾ F5 PERSISTENCE (FLASK WEB UI)
+====================================================================================================
+
+- Vị trí mã nguồn: demo_flask/app.py & demo_flask/templates/index.html
+- Công nghệ: Flask Server (Cổng 5000), TailwindCSS CDN, FontAwesome 6, Google Fonts (Plus Jakarta Sans).
+- Kiến trúc Dual-Engine thông minh:
+  + Khi FastAPI (Port 8000) đang chạy: Flask chuyển tiếp request qua REST API microservice.
+  + Khi FastAPI tắt: Flask tự động nạp Local Fallback Engine (PhoBERT Classifier nội bộ) với cơ chế 
+    TTL Cache kiểm tra health check 10 giây/lần. Đảm bảo người dùng Web không bao giờ bị gián đoạn.
+
+6.1. Ngôn ngữ thiết kế 3D Cockpit Dark Theme:
+- Lấy cảm hứng từ khoang lái thông minh của các dòng xe điện tương lai (Cyberpunk / Space Cockpit).
+- Không gian nền chuyển sắc sâu (`#090d16` kết hợp các điểm phát quang Radial Gradient tím & xanh ngọc).
+- Các tấm kính mờ 3D Glassmorphism (`backdrop-filter: blur(20px)`), viền kính phản xạ Specular Highlight.
+- Nút bấm tạo khối nổi vật lý (Skeuomorphic 3D Push Buttons) với hiệu ứng ấn lún xúc giác khi nhấp chuột (`active:translate-y-1`).
+- Thanh đo tỷ lệ xác suất cảm xúc 3D Neon: Xanh ngọc (`POS`), Đỏ hồng (`NEG`), Vàng hổ phách (`NEU`).
+- Favicon thương hiệu: Tích hợp icon WebP 3D chuẩn hóa tại tab trình duyệt và logo trung tâm.
+
+6.2. Cơ chế Lưu trữ & Tự Động Phục Hồi Dữ Liệu Khi F5 (Full F5 State Persistence):
+- **Phân tích đơn lẻ (Single Tab)**:
+  + Tự động lưu `car_single_input`, `car_single_result` và `car_single_gemini` vào `localStorage`.
+  + Khi người dùng nhấn F5 hoặc tải lại trang: Giao diện lập tức khôi phục toàn bộ thẻ kết quả 3D PhoBERT 
+    và 4 khối tư vấn Gemini mà KHÔNG cần gọi lại API Gemini (tiết kiệm 100% quota và thời gian chờ).
+  + Nút "Làm Mới": Cho phép người dùng reset sạch sẽ mọi kết quả đã lưu.
+- **Phân tích hàng loạt (Bulk Tab)**:
+  + Ghi nhớ `car_active_tab = 'bulk'` và mã tác vụ `car_bulk_task_id`.
+  + Khi F5 trong lúc đang chạy: Tự động kết nối lại và tiếp tục cập nhật thanh tiến độ % realtime.
+  + Khi F5 sau khi hoàn tất: Khôi phục tức thì tên file, bộ đếm POS/NEU/NEG, bảng xem trước Top 10 dòng
+    và nút tải file CSV kết quả.
+  + Cơ chế Disk Recovery: Kể cả khi Flask server bị khởi động lại (restart), backend vẫn tự động quét
+    thư mục `bulk_outputs/` để tái tạo lại trạng thái tác vụ từ file CSV đã lưu trên đĩa.
+
+====================================================================================================
+PHẦN 7: TÍNH NĂNG NÂNG CAO 1 - AI SUGGEST (GEMINI 3.1 FLASH LITE DEEP ANALYST)
+====================================================================================================
+
+- Vị trí mã nguồn: AI_suggest/gemini_suggest.py & AI_suggest/gemini_api_key
+- Công nghệ: Google Gemini 3.1 Flash Lite (Google Generative AI SDK).
+- Mục tiêu: Chuyển hóa kết quả phân loại thô thành **HÀNH ĐỘNG CỤ THỂ CHO BỘ PHẬN MARKETING & CHĂM SÓC KHÁCH HÀNG**.
+
+7.1. Cơ chế Multi-Key Auto-Rotation (23 API Keys Dự Phòng):
+- Danh sách 23 keys được nạp từ tệp `AI_suggest/gemini_api_key`.
+- Khi một key gặp lỗi hạn mức (**Rate Limit / Quota Exceeded / HTTP 429**), module tự động đánh dấu lỗi 
+  và xoay tua sang key tiếp theo trong danh sách mà không làm gián đoạn trải nghiệm người dùng.
+
+7.2. Bộ nhớ đệm In-Memory SHA-256 Cache:
+- Mọi câu bình luận sau khi Gemini phân tích đều được lưu trữ trong Fast Memory Cache (tạo khóa bằng mã băm SHA-256).
+- Nếu người dùng phân tích lại cùng một câu, kết quả trả về trong **0.01 mili-giây**, không tiêu tốn thêm quota.
+
+7.3. Cấu trúc 4 khối phân tích chuyên sâu:
+1. 🌟 **Điểm khách hàng hài lòng / Khen ngợi**: Bóc tách chi tiết các điểm mạnh của xe được khách đề cập
+   (cảm giác lái êm, tăng tốc mượt, thiết kế hiện đại, tiết kiệm chi phí nhiên liệu...).
+2. ⚠️ **Điểm khách hàng chưa hài lòng / Chê / Thắc mắc**: Xác định chính xác nỗi đau khách hàng 
+   (thời gian sạc lâu, cách âm chưa tốt, dịch vụ đại lý chậm, thiếu trạm sạc vùng xa...).
+3. 💡 **Đề xuất chiến lược cho Marketing & CSKH**: Giải pháp hành động thiết thực (tạo video cẩm nang sử dụng,
+   tổ chức sự kiện lái thử xe, điều phối kỹ thuật viên liên hệ hỗ trợ...).
+4. 💬 **Gợi ý câu phản hồi mẫu chuẩn mực cho Fanpage**: Soạn sẵn câu trả lời lịch sự, đúng mực, đúng trọng tâm
+   kèm nút bấm **"Copy câu trả lời"** 1-click để Admin Fanpage có thể dán trả lời khách hàng ngay lập tức.
+
+====================================================================================================
+PHẦN 8: TÍNH NĂNG NÂNG CAO 2 - BULK ANALYST (PHÂN TÍCH HÀNG LOẠT VỚI SINGLE PROCESS LOCK)
+====================================================================================================
+
+- Vị trí mã nguồn: demo_flask/bulk_processor.py & demo_flask/bulk_outputs/
+- Mục tiêu: Cho phép doanh nghiệp tải lên tệp dữ liệu chứa hàng nghìn bình luận để phân loại tự động và xuất báo cáo.
+
+8.1. Hỗ trợ đa dạng định dạng tệp:
+- Tệp văn bản `.txt`: Mỗi bình luận trên một dòng riêng biệt (tự động bỏ qua dòng trống).
+  Hỗ trợ nhiều bảng mã: UTF-8, UTF-8-SIG, CP1258, UTF-16.
+- Bảng tính Excel (`.xlsx`, `.xls`): Tự động phát hiện cột chứa bình luận dựa trên danh sách từ khóa thông minh
+  ("comment", "binh_luan", "noi_dung", "text", "content"...) hoặc tự chọn cột chuỗi đầu tiên.
+- Tệp định dạng `.csv`: Xử lý nhanh qua thư viện Pandas, tự động phát hiện delimiter.
+
+8.2. Cơ chế Khóa Đơn Tiến Trình (Single Concurrent Process Lock):
+- Nhằm ngăn chặn quá tải CPU/GPU và bảo toàn hạn ngạch gọi LLM, hệ thống áp dụng cơ chế khóa phân luồng 
+  (`threading.Lock`). **Tại một thời điểm chỉ cho phép DUY NHẤT 1 tiến trình phân tích hàng loạt được chạy**.
+- Nếu có người dùng gửi tệp mới khi hệ thống đang bận, server lập tức phản hồi mã lỗi `HTTP 409 Conflict` 
+  kèm thông tin tiến độ hiện tại ("Hệ thống đang xử lý: X/Y câu").
+- Giao diện có huy hiệu cảnh báo trạng thái:
+  + 🟢 `Single Process: Sẵn sàng`
+  + 🟡 `Đang khóa: X/Y câu` (nhấp nháy thời gian thực).
+
+8.3. Giám sát thời gian thực & Bảng xem trước (Live Monitor & Preview):
+- Frontend tự động Polling trạng thái mỗi 1 giây (`/bulk/status`).
+- Hiển thị trực quan: Tên tệp, thời gian xử lý đã trôi qua, thanh tiến độ %, câu bình luận đang phân tích,
+  bộ 3 đếm số lượng cảm xúc POS / NEU / NEG.
+- Bảng xem trước Top 10 câu trực quan hiển thị ngay trên web kèm nhãn màu sắc và câu phản hồi Fanpage gợi ý.
+
+8.4. Xuất Báo Cáo CSV Chuẩn UTF-8-SIG (Excel Ready):
+- Toàn bộ kết quả được xuất ra file CSV lưu trữ tại `demo_flask/bulk_outputs/`.
+- Định dạng xuất chuẩn **UTF-8-SIG** (chứa Byte Order Mark - BOM) giúp mở trực tiếp trên Microsoft Excel 
+  ở mọi phiên bản Windows và macOS mà **không bao giờ bị lỗi font tiếng Việt có dấu**.
+- Bảng tổng hợp chứa 14 cột chi tiết: STT, Nội dung, Nhãn cảm xúc, Mã cảm xúc, Độ tin cậy (%), 
+  Xác suất Tích cực (%), Xác suất Trung tính (%), Xác suất Tiêu cực (%), Cảnh báo, Điểm hài lòng, 
+  Điểm chưa hài lòng, Đề xuất Marketing, Câu phản hồi mẫu Fanpage, Key Gemini sử dụng.
+
+====================================================================================================
+PHẦN 9: KIỂM THỬ THỰC TẾ & BỘ TEST BIÊN (EDGE CASES & VALIDATION)
+====================================================================================================
+
+- Vị trí mã nguồn: build_AI_model/test_100_comments.py
+- Chế độ kiểm thử kép:
+  + `--mode local`: Kiểm thử trực tiếp trên nhân PhoBERT cục bộ.
+  + `--mode api`  : Kiểm thử End-to-End toàn diện qua REST API Microservice (Port 8000).
+
+9.1. Đánh giá hiệu năng thực tế trên 100 câu bình luận Facebook ô tô:
+- Độ chính xác tổng quát (Accuracy): ~91.0% - 93.0%.
+- Negative Recall (Độ phủ lớp Tiêu cực): ~94.5% (bắt trọn gần như tuyệt đối các phản ánh sự cố xe).
+- Độ trễ xử lý trung bình: 14.8ms/câu (GPU) và 34.2ms/câu (CPU).
+
+9.2. Bộ kiểm thử trường hợp biên đặc biệt (Edge Cases Suite):
+1. Dấu chấm '.' / "chấm hóng": Nhận diện chính xác nhãn Trung tính (`NEU`) kèm cảnh báo văn bản ngắn vô nghĩa.
+2. Spam số điện thoại / cò mồi bán xe: Phân loại chuẩn xác nhãn Trung tính (`NEU`) kèm cờ nhận diện quảng cáo.
+3. Ký tự lạ lặp lại & Emojis (`@@@###$$$ 😡😡😡 xe chán vkl`): Làm sạch hoàn hảo và nhận diện đúng nhãn `TIÊU CỰC`
+   với độ tin cậy trên 97.0%.
+4. Câu phủ định đảo ngữ phức tạp ("Xe tưởng không ngon mà ngon không tưởng"): Nhận diện chính xác nhãn `TÍCH CỰC`
+   nhờ cơ chế Self-Attention của PhoBERT, khắc phục hoàn toàn điểm yếu của các mô hình từ khóa truyền thống.
+
+====================================================================================================
+PHẦN 10: CẤU TRÚC THƯ MỤC & DANH MỤC TỆP TIN CỐT LÕI (PROJECT ARCHITECTURE)
+====================================================================================================
+
+MatGroupDemo/
+├── requirements.txt                          # Danh sách các thư viện Python phụ thuộc
+├── README.md                                 # Tài liệu tổng quan dự án định dạng Markdown
+├── PROJECT_SUMMARY.txt                       # Tệp tài liệu tổng hợp toàn diện dự án (Tệp này)
+│
+├── data_processing/                          # [MODULE 1] THU THẬP & LÀM SẠCH DỮ LIỆU
+│   ├── crawl_fb_post_by_serp/
+│   │   ├── crawl_fb_post.py                  # Cào link bài viết Facebook qua SerpApi
+│   │   ├── serp_api_key.txt                  # Khóa API SerpApi
+│   │   └── facebook_car_posts.csv            # Danh sách bài viết cào được
+│   └── crawl_fb_comment_by_bright_data/
+│       ├── crawl_fb_cmt.py                   # Cào bình luận Facebook qua Bright Data API
+│       ├── clean_comments.py                 # Lọc dấu chấm hóng, spam số điện thoại, rác
+│       ├── bright_data_api_key.txt           # Danh sách các cặp API Key & Dataset ID
+│       ├── facebook_car_comments.csv         # Bình luận thô ban đầu
+│       └── facebook_car_comments_clean.csv   # Bình luận đã được làm sạch
+│
+├── build_AI_model/                           # [MODULE 2] MÔ HÌNH PHO-BERT & REST API
+│   ├── classifier.py                         # Lớp bao bọc PhoBERT & Lập trình phòng thủ
+│   ├── api.py                                # FastAPI Microservice REST API (Port 8000)
+│   ├── train_model.py                        # Huấn luyện PhoBERT với Weighted Loss
+│   ├── label_and_split.py                    # Gán nhãn tự động bằng AI (Pseudo-labeling)
+│   ├── split_train_test.py                   # Xuất chuẩn 80% Train và 20% Test (Stratified)
+│   ├── test_100_comments.py                  # Bộ kiểm thử 100 câu & Pin trường hợp biên
+│   ├── DOCUMENTATION.md                      # Báo cáo kỹ thuật chi tiết
+│   ├── checkpoints/                          # Thư mục lưu mô hình sau khi tinh chỉnh
+│   └── data/
+│       ├── train.csv                         # 80% dữ liệu huấn luyện (5.036 dòng)
+│       ├── test.csv                          # 20% dữ liệu kiểm thử độc lập (1.260 dòng)
+│       ├── facebook_car_comments_labeled.csv # Toàn bộ dữ liệu 6.296 dòng đã gán nhãn
+│       └── test_100_results.csv              # Kết quả chi tiết kiểm thử 100 câu
+│
+├── AI_suggest/                               # [MODULE 3] TRỢ LÝ AI TẠO SINH GEMINI
+│   ├── gemini_suggest.py                     # Phân tích chuyên sâu + Cache + Key Rotation
+│   └── gemini_api_key                        # Danh sách 23 Google Gemini API keys dự phòng
+│
+└── demo_flask/                               # [MODULE 4] GIAO DIỆN WEB 3D & BULK ANALYST
+    ├── app.py                                # Web Server Flask (Port 5000, Dual-Engine)
+    ├── bulk_processor.py                     # Quản lý phân tích hàng loạt với Single Process Lock
+    ├── favicon.webp                          # Logo Favicon 3D WebP
+    ├── sample_car_comments.xlsx              # File mẫu Excel 15 bình luận ô tô thực tế
+    ├── sample_car_comments.txt               # File mẫu TXT 15 bình luận ô tô thực tế
+    ├── bulk_outputs/                         # Thư mục lưu các tệp CSV xuất ra (UTF-8-SIG)
+    ├── templates/
+    │   └── index.html                        # Giao diện 3D Cockpit Dark Theme, F5 Persistence
+    └── README.md                             # Hướng dẫn chi tiết sử dụng Web Demo Flask
+
+====================================================================================================
+HƯỚNG DẪN KHỞI CHẠY NHANH CÁC DỊCH VỤ (QUICK START COMMANDS)
+====================================================================================================
+
+1. Khởi chạy Microservice REST API (Port 8000):
+   python3 build_AI_model/api.py
+   -> Truy cập Swagger UI: http://localhost:8000/docs
+
+2. Khởi chạy Giao diện Web 3D Flask (Port 5000):
+   python3 demo_flask/app.py
+   -> Truy cập Web Studio : http://localhost:5000
+
+3. Chạy kiểm thử End-to-End toàn diện:
+   python3 build_AI_model/test_100_comments.py --mode api
+
+====================================================================================================
+                                      HẾT TÀI LIỆU
+====================================================================================================

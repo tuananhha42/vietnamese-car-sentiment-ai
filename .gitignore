@@ -1,0 +1,43 @@
+# Python Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Sensitive Secrets & API Keys
+.env
+.env.local
+.env.*.local
+*api_key*.txt
+AI_suggest/gemini_api_key
+data_processing/crawl_fb_comment_by_bright_data/bright_data_api_key.txt
+data_processing/crawl_fb_post_by_serp/serp_api_key.txt
+
+# Logs and runtime artifacts
+*.log
+log.txt
+*.tmp
+*.bak
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Heavy Model Checkpoints & Weights (>100MB exceeds GitHub file limit)
+build_AI_model/checkpoints/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+
+# Generated Bulk Analysis Output Reports
+demo_flask/bulk_outputs/*.csv
+!demo_flask/bulk_outputs/.gitkeep

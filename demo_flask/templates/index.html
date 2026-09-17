@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Car Sentiment Intelligence - 3D PhoBERT & Gemini Studio</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/webp" href="/favicon.webp">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="icon" type="image/webp" href="data:image/webp;base64,UklGRnQBAABXRUJQVlA4IGgBAACwCACdASogACAAPtE+tFooIigoFAEAGglsALEMQ7wOABVQHW5egB0j/2zeyAYAJlLnM/W5+uSHQy9axBgB7kWXBwQaD/NWCjcwCp7u4AAA/th/JvO2QzPb4Xce1PphLcmxzZBUizt+usIyAaFApuEvOAfyN8XLAsoK+wygPX7Hszc+FH6yaaKqR4r50J2Z9RpxT5JG015GoWf8ii+kqVYY15hasmaNMLQ6+H6QI+/zIb/Xpnvyx9j9tVns+RhJVL+/cDA/9J0kVTLYkrsbGd8amQLpzF/LmHyf3fKNgb87oFillAN4AIqWW2mjtNj2pE/TB7o7TaTJQiZUFuL846tnMy6Y6gylvaOpBN4w3v/+BHX7EG6vE4FHpfLJFx6USP9WiLzrbV0YBX0vTNLn+Mfu58iLQU5n7mBGfUYHp8VfmuL861I5qL88O6uVP1EMWzZVlq6vREQ/pn9yZ/zY026629mBNHKmgAA=">
+    
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    },
+                    boxShadow: {
+                        '3d-btn': '0 6px 0 #1e3a8a, 0 12px 22px rgba(37, 99, 235, 0.4)',
+                        '3d-btn-active': '0 2px 0 #1e3a8a, 0 4px 8px rgba(37, 99, 235, 0.4)',
+                        '3d-emerald': '0 6px 0 #064e3b, 0 12px 22px rgba(16, 185, 129, 0.4)',
+                        '3d-purple': '0 6px 0 #581c87, 0 12px 22px rgba(147, 51, 234, 0.4)',
+                        '3d-card': '0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+                        'neon-emerald': '0 0 25px -3px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
+                        'neon-rose': '0 0 25px -3px rgba(244, 63, 94, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
+                        'neon-amber': '0 0 25px -3px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Ambient 3D Cockpit Lighting Background */
+        body {
+            background-color: #090d16;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.12) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.6) 0px, transparent 100%),
+                radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.10) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* 3D Glass Layer */
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+
+        /* 3D Cylindrical Progress Fill with Specular Highlight */
+        .progress-3d {
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.05);
+        }
+        .progress-bar-glow {
+            background-image: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255) 60%);
+        }
+
+        /* Tactile 3D sample chips */
+        .chip-3d {
+            box-shadow: 0 3px 0 rgba(0, 0, 0, 0.4), 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.15s ease-out;
+        }
+        .chip-3d:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 0 rgba(0, 0, 0, 0.4), 0 8px 12px rgba(0, 0, 0, 0.3);
+        }
+        .chip-3d:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 2px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 3D Tab Navigation */
+        .tab-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(79, 70, 229, 0.2) 100%);
+            border-color: rgba(129, 140, 248, 0.6);
+            color: #ffffff;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 8px 16px -4px rgba(99, 102, 241, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* 3D Custom Switch */
+        .switch-container {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+        .switch-container input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #0b0f19;
+            border: 1px solid #334155;
+            transition: .25s ease-in-out;
+            border-radius: 9999px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.7);
+        }
+        .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #ffffff;
+            transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        }
+        .switch-container input:checked + .switch-slider {
+            background: linear-gradient(135deg, #9333ea 0%, #6366f1 100%);
+            border-color: #c084fc;
+            box-shadow: 0 0 15px rgba(147, 51, 234, 0.5), inset 0 1px 0 rgba(255,255,255,0.25);
+        }
+        .switch-container input:checked + .switch-slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Subtle glowing border animation */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.3)); }
+            50% { opacity: 0.9; filter: drop-shadow(0 0 25px rgba(99, 102, 241, 0.6)); }
+        }
+        .glow-active {
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-200 font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-150%] opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 bg-slate-900/95 border border-indigo-500/40 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl">
+        <div id="toast-icon" class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <span id="toast-msg" class="text-sm font-medium">Thông báo</span>
+    </div>
+
+    <div class="max-w-5xl mx-auto py-10 px-4 sm:px-6">
+        
+        <!-- 3D HERO HEADER -->
+        <header class="text-center mb-8 relative">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-32 bg-indigo-600/20 blur-[90px] rounded-full pointer-events-none -z-10"></div>
+
+            <div class="inline-flex items-center justify-center relative mb-4 group cursor-pointer">
+                <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-cyan-400 to-purple-500 rounded-3xl blur-md opacity-70 group-hover:opacity-100 transition duration-500 glow-active"></div>
+                
+                <div class="relative w-20 h-20 bg-slate-900/90 border border-white/20 rounded-2xl p-2.5 flex items-center justify-center shadow-2xl backdrop-blur-xl transform transition duration-300 group-hover:scale-105">
+                    <img src="/favicon.webp" 
+                         onerror="this.src='data:image/webp;base64,UklGRnQBAABXRUJQVlA4IGgBAACwCACdASogACAAPtE+tFooIigoFAEAGglsALEMQ7wOABVQHW5egB0j/2zeyAYAJlLnM/W5+uSHQy9axBgB7kWXBwQaD/NWCjcwCp7u4AAA/th/JvO2QzPb4Xce1PphLcmxzZBUizt+usIyAaFApuEvOAfyN8XLAsoK+wygPX7Hszc+FH6yaaKqR4r50J2Z9RpxT5JG015GoWf8ii+kqVYY15hasmaNMLQ6+H6QI+/zIb/Xpnvyx9j9tVns+RhJVL+/cDA/9J0kVTLYkrsbGd8amQLpzF/LmHyf3fKNgb87oFillAN4AIqWW2mjtNj2pE/TB7o7TaTJQiZUFuL846tnMy6Y6gylvaOpBN4w3v/+BHX7EG6vE4FHpfLJFx6USP9WiLzrbV0YBX0vTNLn+Mfu58iLQU5n7mBGfUYHp8VfmuL861I5qL88O6uVP1EMWzZVlq6vREQ/pn9yZ/zY026629mBNHKmgAA='"
+                         alt="Favicon Logo" 
+                         class="w-full h-full object-contain filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">
+                </div>
+            </div>
+
+            <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white flex items-center justify-center gap-2.5">
+                <span>AI Car Sentiment Intelligence</span>
+                <span class="text-xs uppercase px-2.5 py-1 rounded-full font-bold bg-gradient-to-r from-blue-500 to-indigo-600 text-white border border-white/20 shadow-md">3D Pro</span>
+            </h1>
+            <p class="text-slate-400 mt-2 text-sm sm:text-base max-w-xl mx-auto font-normal">
+                Hệ thống thẩm định cảm xúc đa tầng <span class="text-indigo-400 font-semibold">PhoBERT</span> & Trí tuệ Nhân tạo <span class="text-purple-400 font-semibold">Gemini Flash Lite</span>
+            </p>
+
+            <!-- 3D Status Pill Indicator -->
+            <div class="mt-4 inline-flex items-center gap-2.5 text-xs bg-slate-800/80 border border-slate-700/80 text-slate-300 px-4 py-1.5 rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-md">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span class="font-medium">
+                    Engine: <strong class="text-white">{{ 'Microservice REST API (Port 8000)' if mode == 'api' else 'PhoBERT Local Engine (Fallback)' }}</strong>
+                </span>
+            </div>
+        </header>
+
+        <!-- 3D DUAL-TAB SELECTOR -->
+        <div class="flex justify-center mb-8">
+            <div class="inline-flex p-1.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-2xl backdrop-blur-xl">
+                <button type="button" 
+                        id="tab-btn-single" 
+                        onclick="switchTab('single')" 
+                        class="tab-btn active px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 text-slate-300 hover:text-white border border-transparent">
+                    <i class="fa-solid fa-feather-pointed text-indigo-400"></i>
+                    <span>Phân Tích Đơn Lẻ (Single Text)</span>
+                </button>
+                <button type="button" 
+                        id="tab-btn-bulk" 
+                        onclick="switchTab('bulk')" 
+                        class="tab-btn px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 text-slate-400 hover:text-white border border-transparent">
+                    <i class="fa-solid fa-layer-group text-purple-400"></i>
+                    <span>Phân Tích Hàng Loạt (Bulk Analyst)</span>
+                    <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">TXT/Excel/CSV</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 1: SINGLE COMMENT ANALYSIS ==================== -->
+        <div id="tab-content-single">
+            
+            <!-- 3D INPUT CARD -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden">
+                <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent"></div>
+
+                <form action="/predict" method="POST">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <label for="text" class="font-bold text-slate-200 text-sm sm:text-base flex items-center gap-2">
+                            <i class="fa-solid fa-comment-dots text-indigo-400"></i>
+                            <span>Nội dung bình luận xe hơi cần thẩm định:</span>
+                        </label>
+                        <span class="text-xs text-slate-500 font-mono">Tiếng Việt • UTF-8</span>
+                    </div>
+
+                    <!-- 3D Recessed Textarea -->
+                    <div class="relative rounded-2xl overflow-hidden p-[1px] bg-gradient-to-b from-slate-700/60 to-slate-800/20 focus-within:from-indigo-500 focus-within:to-cyan-400 transition-all duration-300 shadow-inner">
+                        <textarea 
+                            id="text" 
+                            name="text" 
+                            rows="4" 
+                            required
+                            placeholder="Nhập nhận xét về xe, cảm giác lái, pin, bảo hành, giá lăn bánh... (Ví dụ: Xe này đi êm và rất tiết kiệm điện)"
+                            class="w-full bg-slate-900/90 text-slate-100 rounded-2xl p-4 focus:outline-none resize-none placeholder:text-slate-500 text-sm sm:text-base font-normal shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]"
+                        >{{ input_text or '' }}</textarea>
+                    </div>
+
+                    <!-- 3D Tactile Quick Test Chips -->
+                    <div class="mt-4">
+                        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-gamepad text-indigo-400"></i>
+                            <span>Chọn nhanh mẫu kiểm thử thực tế (Facebook Car Comments):</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2.5">
+                            <button type="button" onclick="setSample('Xe này chạy rất êm, nội thất hoàn thiện tốt và cực kỳ tiết kiệm điện!')" 
+                                    class="chip-3d text-xs font-semibold px-3.5 py-2 rounded-xl bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-900/50 flex items-center gap-1.5">
+                                <i class="fa-regular fa-thumbs-up text-emerald-400"></i> Tích cực (POS)
+                            </button>
+                            
+                            <button type="button" onclick="setSample('Chạy được 3 tháng đã lỗi pin, đại lý bảo hành thiếu trách nhiệm quá thất vọng')" 
+                                    class="chip-3d text-xs font-semibold px-3.5 py-2 rounded-xl bg-rose-950/40 text-rose-300 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-900/50 flex items-center gap-1.5">
+                                <i class="fa-regular fa-thumbs-down text-rose-400"></i> Tiêu cực (NEG)
+                            </button>
+
+                            <button type="button" onclick="setSample('Tiện cho mình xin phép hỏi chi phí lăn bánh và thủ tục trả góp với ạ?')" 
+                                    class="chip-3d text-xs font-semibold px-3.5 py-2 rounded-xl bg-amber-950/40 text-amber-300 border border-amber-500/30 hover:border-amber-400 hover:bg-amber-900/50 flex items-center gap-1.5">
+                                <i class="fa-regular fa-circle-question text-amber-400"></i> Trung tính (NEU)
+                            </button>
+
+                            <button type="button" onclick="setSample('550tr lăn bánh còn thừa cầm về, gầm cao 5 chỗ mới tinh lh: 0918.079.865')" 
+                                    class="chip-3d text-xs font-semibold px-3.5 py-2 rounded-xl bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-900/50 flex items-center gap-1.5">
+                                <i class="fa-solid fa-phone text-cyan-400"></i> Spam số ĐT cò mồi
+                            </button>
+
+                            <button type="button" onclick="setSample('@@@###$$$ xe này chán vkl 😡😡😡')" 
+                                    class="chip-3d text-xs font-semibold px-3.5 py-2 rounded-xl bg-purple-950/40 text-purple-300 border border-purple-500/30 hover:border-purple-400 hover:bg-purple-900/50 flex items-center gap-1.5">
+                                <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> Ký tự lạ & Slang
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3D Action Submit Button & Reset -->
+                    <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                        <button type="button" 
+                                id="btn-clear-single" 
+                                onclick="clearSingleResult()" 
+                                class="hidden inline-flex items-center gap-2 text-slate-400 hover:text-rose-300 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition shadow-sm">
+                            <i class="fa-solid fa-rotate-left text-xs"></i>
+                            <span>Làm Mới</span>
+                        </button>
+                        <div class="ml-auto">
+                            <button type="submit" 
+                                    class="inline-flex items-center gap-2.5 text-white font-bold text-sm sm:text-base px-8 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 shadow-3d-btn active:shadow-3d-btn-active active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
+                                <i class="fa-solid fa-bolt-lightning text-yellow-300"></i>
+                                <span>Phân Tích Cảm Xúc</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ERROR ALERT -->
+            {% if error_msg %}
+            <div class="glass-panel border-l-4 border-rose-500 rounded-2xl p-5 mb-8 flex items-start gap-4 shadow-[0_10px_25px_rgba(244,63,94,0.15)] bg-rose-950/30">
+                <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 text-lg">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-rose-300 text-sm">Đầu vào không hợp lệ</h4>
+                    <p class="text-xs sm:text-sm text-rose-200/80 mt-0.5">{{ error_msg }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 3D RESULT SHOWCASE CARD -->
+            <div id="single-result-card" class="glass-panel rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden {% if not result %}hidden{% else %}{% if result.sentiment == 'POS' %} border-emerald-500/30 shadow-neon-emerald{% elif result.sentiment == 'NEG' %} border-rose-500/30 shadow-neon-rose{% else %} border-amber-500/30 shadow-neon-amber{% endif %}{% endif %}">
+                
+                <div class="flex items-center justify-between border-b border-slate-700/60 pb-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div id="res-badge-box" class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-lg {% if result %}{% if result.sentiment == 'POS' %} bg-emerald-500/20 text-emerald-400 border border-emerald-500/40{% elif result.sentiment == 'NEG' %} bg-rose-500/20 text-rose-400 border border-rose-500/40{% else %} bg-amber-500/20 text-amber-400 border border-amber-500/40{% endif %}{% endif %}">
+                            <i class="fa-solid fa-chart-simple"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base sm:text-lg font-bold text-white">Kết Quả Nhận Diện PhoBERT</h2>
+                            <span class="text-xs text-slate-400">Xác thực cảm xúc dựa trên kiến trúc Deep Transformer</span>
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Thời gian suy luận</span>
+                        <div class="text-xs font-mono font-bold text-indigo-300">
+                            <i class="fa-regular fa-clock mr-1"></i><span id="res-process-time">{{ result.process_time_ms if result else '15.0' }} ms</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D Main Result Holographic Banner -->
+                <div id="res-banner" class="p-6 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 {% if result %}{% if result.sentiment == 'POS' %} bg-gradient-to-br from-emerald-950/60 via-emerald-900/20 to-slate-900/80 border border-emerald-500/30{% elif result.sentiment == 'NEG' %} bg-gradient-to-br from-rose-950/60 via-rose-900/20 to-slate-900/80 border border-rose-500/30{% else %} bg-gradient-to-br from-amber-950/60 via-amber-900/20 to-slate-900/80 border border-amber-500/30{% endif %}{% endif %}">
+                    
+                    <div class="flex items-center gap-4">
+                        <!-- 3D Giant Emoji Stamp -->
+                        <div id="res-emoji-box" class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-2xl border border-white/10 {% if result %}{% if result.sentiment == 'POS' %} bg-emerald-500/20 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)]{% elif result.sentiment == 'NEG' %} bg-rose-500/20 text-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.3)]{% else %} bg-amber-500/20 text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.3)]{% endif %}{% endif %}">
+                            <i id="res-emoji-icon" class="{% if result %}{% if result.sentiment == 'POS' %}fa-solid fa-face-laugh-beam{% elif result.sentiment == 'NEG' %}fa-solid fa-face-frown-open{% else %}fa-solid fa-face-meh{% endif %}{% else %}fa-solid fa-face-smile{% endif %}"></i>
+                        </div>
+
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Cảm xúc phân loại:</span>
+                            <div class="text-2xl sm:text-3xl font-extrabold text-white mt-0.5 tracking-tight flex items-center gap-2">
+                                <span id="res-label">{{ result.label if result else '' }}</span>
+                                <span id="res-code" class="text-xs px-2 py-0.5 rounded-md font-mono bg-black/40 text-slate-300 border border-white/10">{{ result.sentiment if result else '' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3D Confidence Gauge -->
+                    <div class="sm:text-right border-t sm:border-t-0 sm:border-l border-slate-700/50 pt-3 sm:pt-0 sm:pl-6">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Độ tin cậy (Confidence):</span>
+                        <div id="res-confidence" class="text-3xl font-black text-white mt-0.5 tracking-tight font-mono {% if result %}{% if result.sentiment == 'POS' %} text-emerald-400{% elif result.sentiment == 'NEG' %} text-rose-400{% else %} text-amber-400{% endif %}{% endif %}">
+                            {{ "%.2f"|format(result.confidence * 100) if result else '0.00' }}%
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warning Callout -->
+                <div id="res-warning-box" class="{% if not result or not result.warning %}hidden{% endif %} mt-4 p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/30 text-amber-200 text-xs flex items-center gap-2.5">
+                    <i class="fa-solid fa-circle-exclamation text-amber-400 text-sm"></i>
+                    <span id="res-warning-text">{{ result.warning if result and result.warning else '' }}</span>
+                </div>
+
+                <!-- 3D Cylindrical Probability Bars -->
+                <div class="mt-6 space-y-3.5">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Xác suất phân phối 3 lớp cảm xúc:</span>
+                    
+                    <!-- POS Bar -->
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-emerald-400 flex items-center gap-1.5"><i class="fa-solid fa-circle text-[7px]"></i> TÍCH CỰC (POS)</span>
+                            <span id="res-prob-pos-val" class="font-mono text-emerald-300">{{ "%.2f"|format(result.detail_scores.POS * 100) if result and result.detail_scores else '0.00' }}%</span>
+                        </div>
+                        <div class="w-full bg-slate-950 rounded-full h-3 p-[1px] progress-3d overflow-hidden">
+                            <div id="res-prob-pos-bar" class="bg-gradient-to-r from-emerald-600 to-teal-400 h-full rounded-full progress-bar-glow transition-all duration-700 shadow-[0_0_12px_rgba(16,185,129,0.5)]" 
+                                 style="width: {{ (result.detail_scores.POS * 100) if result and result.detail_scores else 0 }}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- NEU Bar -->
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-amber-400 flex items-center gap-1.5"><i class="fa-solid fa-circle text-[7px]"></i> TRUNG TÍNH (NEU)</span>
+                            <span id="res-prob-neu-val" class="font-mono text-amber-300">{{ "%.2f"|format(result.detail_scores.NEU * 100) if result and result.detail_scores else 0 }}%</span>
+                        </div>
+                        <div class="w-full bg-slate-950 rounded-full h-3 p-[1px] progress-3d overflow-hidden">
+                            <div id="res-prob-neu-bar" class="bg-gradient-to-r from-amber-600 to-yellow-400 h-full rounded-full progress-bar-glow transition-all duration-700 shadow-[0_0_12px_rgba(245,158,11,0.5)]" 
+                                 style="width: {{ (result.detail_scores.NEU * 100) if result and result.detail_scores else 0 }}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- NEG Bar -->
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-rose-400 flex items-center gap-1.5"><i class="fa-solid fa-circle text-[7px]"></i> TIÊU CỰC (NEG)</span>
+                            <span id="res-prob-neg-val" class="font-mono text-rose-300">{{ "%.2f"|format(result.detail_scores.NEG * 100) if result and result.detail_scores else 0 }}%</span>
+                        </div>
+                        <div class="w-full bg-slate-950 rounded-full h-3 p-[1px] progress-3d overflow-hidden">
+                            <div id="res-prob-neg-bar" class="bg-gradient-to-r from-rose-600 to-red-400 h-full rounded-full progress-bar-glow transition-all duration-700 shadow-[0_0_12px_rgba(244,63,94,0.5)]" 
+                                 style="width: {{ (result.detail_scores.NEG * 100) if result and result.detail_scores else 0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D Trigger Button: Deep Analyst with AI -->
+                <div class="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="text-xs text-slate-400">
+                        <i class="fa-solid fa-microchip text-indigo-400 mr-1.5"></i>
+                        <span>Tích hợp mô hình ngôn ngữ lớn để khai thác dữ liệu kinh doanh</span>
+                    </div>
+
+                    <button 
+                        id="btn-deep-analyze"
+                        type="button" 
+                        onclick="callDeepAnalyst()"
+                        class="inline-flex items-center justify-center gap-2.5 text-white font-bold text-sm px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 shadow-3d-purple active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+                        <span>✨ Deep Analyst with AI (Gemini)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3D AI SUGGESTION RESULT CONTAINER -->
+            <div id="deep-analyst-container" class="hidden mb-8">
+                
+                <!-- Loading State -->
+                <div id="ai-loading" class="glass-panel rounded-3xl p-10 text-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-indigo-500/5 backdrop-blur-xl"></div>
+                    <div class="relative z-10">
+                        <div class="inline-block relative mb-4">
+                            <div class="w-16 h-16 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin"></div>
+                            <i class="fa-solid fa-brain absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl text-indigo-400"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white">Đang kích hoạt Gemini AI phân tích chuyên sâu...</h3>
+                        <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">Tự động luân chuyển API keys, bóc tách điểm khen/chê, sinh chiến lược Marketing và câu phản hồi mẫu</p>
+                    </div>
+                </div>
+
+                <!-- AI 3D Card Output -->
+                <div id="ai-output" class="hidden glass-panel rounded-3xl p-6 sm:p-8 border border-purple-500/30 shadow-[0_0_35px_rgba(147,51,234,0.15)] relative">
+                    
+                    <!-- Card Header -->
+                    <div class="flex items-center justify-between border-b border-slate-700/60 pb-4 mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-2xl bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center justify-center text-lg shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+                                <i class="fa-solid fa-brain"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-white text-base sm:text-lg">Báo Cáo Phân Tích Chuyên Sâu (Gemini AI)</h3>
+                                <span class="text-xs text-slate-400">Mô hình: <span class="text-purple-300 font-mono">gemini-3.1-flash-lite</span> • <span id="ai-key-used" class="text-indigo-400 font-semibold">Key #1</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4 3D Sub-panels -->
+                    <div class="space-y-4">
+                        
+                        <!-- 1. Điểm hài lòng -->
+                        <div class="rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-emerald-950/30 to-slate-900/60 border border-emerald-500/20 shadow-lg">
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-2 mb-2">
+                                <i class="fa-solid fa-thumbs-up"></i>
+                                <span>1. Điểm khách hàng hài lòng / Khen ngợi:</span>
+                            </h4>
+                            <div id="ai-hai-long" class="text-xs sm:text-sm text-slate-300 leading-relaxed pl-1"></div>
+                        </div>
+
+                        <!-- 2. Điểm chưa hài lòng -->
+                        <div class="rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-rose-950/30 to-slate-900/60 border border-rose-500/20 shadow-lg">
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-rose-400 flex items-center gap-2 mb-2">
+                                <i class="fa-solid fa-thumbs-down"></i>
+                                <span>2. Điểm khách hàng chưa hài lòng / Chê / Thắc mắc:</span>
+                            </h4>
+                            <div id="ai-chua-hai-long" class="text-xs sm:text-sm text-slate-300 leading-relaxed pl-1"></div>
+                        </div>
+
+                        <!-- 3. Đề xuất Marketing -->
+                        <div class="rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-indigo-950/30 to-slate-900/60 border border-indigo-500/20 shadow-lg">
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2 mb-2">
+                                <i class="fa-solid fa-lightbulb"></i>
+                                <span>3. Đề xuất giải pháp hành động cho Marketing & CSKH:</span>
+                            </h4>
+                            <div id="ai-marketing" class="text-xs sm:text-sm text-slate-300 leading-relaxed pl-1"></div>
+                        </div>
+
+                        <!-- 4. Gợi ý câu phản hồi mẫu cho Fanpage -->
+                        <div class="rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-purple-950/40 to-slate-900/80 border border-purple-500/30 shadow-lg relative">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="text-xs font-extrabold uppercase tracking-wider text-purple-300 flex items-center gap-2">
+                                    <i class="fa-solid fa-comment-dots"></i>
+                                    <span>4. Gợi ý câu phản hồi chuẩn mực cho Fanpage:</span>
+                                </h4>
+                                <button type="button" onclick="copyReplyText()" 
+                                        class="chip-3d text-xs font-bold px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-regular fa-copy"></i> Copy câu trả lời
+                                </button>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-slate-950/60 border border-purple-400/20 text-xs sm:text-sm text-slate-200 italic leading-relaxed" id="ai-reply-box">
+                                <span id="ai-reply-text"></span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- AI Error Alert -->
+                <div id="ai-error" class="hidden glass-panel border border-rose-500/40 text-rose-300 p-5 rounded-2xl text-xs sm:text-sm mt-4"></div>
+            </div>
+
+        </div>
+
+        <!-- ==================== TAB 2: BULK ANALYST (TXT / EXCEL / CSV) ==================== -->
+        <div id="tab-content-bulk" class="hidden">
+            
+            <!-- Bulk Upload Card -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden">
+                <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/40 to-transparent"></div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-lg font-black text-white flex items-center gap-2.5">
+                            <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                            <span>Phân Tích Hàng Loạt Từ Tệp Dữ Liệu</span>
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Tải lên tệp <span class="text-indigo-300 font-semibold">.TXT</span> (mỗi câu 1 dòng), <span class="text-emerald-300 font-semibold">.XLSX</span> hoặc <span class="text-cyan-300 font-semibold">.CSV</span> để chấm điểm cảm xúc tự động.
+                        </p>
+                    </div>
+
+                    <!-- Single Process Lock Status Badge -->
+                    <div id="lock-status-pill" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800/90 border border-slate-700/80 shadow-md">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" id="lock-indicator-dot"></span>
+                        <span id="lock-status-text" class="text-slate-300">Single Process: Sẵn sàng</span>
+                    </div>
+                </div>
+
+                <form id="bulk-upload-form" onsubmit="submitBulkForm(event)">
+                    
+                    <!-- 3D Drag & Drop Zone -->
+                    <div id="drop-zone" 
+                         class="relative rounded-2xl border-2 border-dashed border-slate-700 hover:border-indigo-500 bg-slate-900/60 p-8 text-center transition-all duration-300 cursor-pointer shadow-inner">
+                        <input type="file" id="bulk-file-input" name="file" accept=".txt,.xlsx,.xls,.csv" class="hidden" onchange="handleFileSelected(event)">
+                        
+                        <div id="drop-zone-idle">
+                            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(99,102,241,0.2)]">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </div>
+                            <h3 class="text-base font-bold text-white mb-1">Kéo thả tệp dữ liệu vào đây, hoặc click để chọn</h3>
+                            <p class="text-xs text-slate-400 max-w-sm mx-auto">Hỗ trợ tệp <strong>.TXT</strong> (1 câu/dòng), bảng tính <strong>Excel (.XLSX, .XLS)</strong> hoặc <strong>.CSV</strong> (tối đa 50MB)</p>
+                        </div>
+
+                        <!-- Selected File Preview -->
+                        <div id="drop-zone-selected" class="hidden">
+                            <div class="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-slate-800/90 border border-indigo-500/40 text-white shadow-lg">
+                                <i class="fa-solid fa-file-lines text-indigo-400 text-xl" id="selected-file-icon"></i>
+                                <div class="text-left">
+                                    <div id="selected-filename" class="text-sm font-bold text-slate-100">data_comments.xlsx</div>
+                                    <div id="selected-filesize" class="text-xs text-slate-400 font-mono">15.4 KB</div>
+                                </div>
+                                <button type="button" onclick="clearSelectedFile(event)" class="ml-3 text-slate-400 hover:text-rose-400 p-1">
+                                    <i class="fa-solid fa-xmark text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Sample Generator Buttons -->
+                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Mẫu thử nhanh:</span>
+                        <button type="button" onclick="useSampleTxt()" class="chip-3d text-xs font-medium px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 hover:border-indigo-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-lines text-indigo-400"></i> Nạp mẫu 15 câu xe hơi (.TXT)
+                        </button>
+                    </div>
+
+                    <!-- 3D Toggle: Deep Analyst with Gemini -->
+                    <div class="mt-6 p-4 rounded-2xl bg-slate-900/80 border border-purple-500/30 flex items-center justify-between gap-4 shadow-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center justify-center text-base shrink-0">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                    <span>Tích hợp Gemini Deep Analyst cho từng bình luận</span>
+                                    <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/40">AI Phản Hồi</span>
+                                </h4>
+                                <p class="text-xs text-slate-400 mt-0.5">
+                                    Tự động bóc tách điểm khen/chê, đề xuất chiến lược Marketing và sinh câu trả lời chuẩn mực cho Fanpage vào từng dòng kết quả.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 3D Toggle Switch -->
+                        <label class="switch-container" title="Bật/Tắt phân tích chuyên sâu với Gemini">
+                            <input type="checkbox" id="chk-deep-analyst" name="deep_analyst">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="mt-6 pt-4 border-t border-slate-800 flex justify-end">
+                        <button type="submit" 
+                                id="btn-start-bulk"
+                                class="inline-flex items-center gap-2.5 text-white font-bold text-sm sm:text-base px-8 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 shadow-3d-purple active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
+                            <i class="fa-solid fa-rocket text-amber-300"></i>
+                            <span>Bắt Đầu Phân Tích Hàng Loạt</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- LIVE BULK EXECUTION MONITOR CARD -->
+            <div id="bulk-monitor-card" class="hidden glass-panel rounded-3xl p-6 sm:p-8 mb-8 border border-indigo-500/30 shadow-2xl relative overflow-hidden">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div id="monitor-icon" class="w-11 h-11 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/40 flex items-center justify-center text-lg shadow-lg animate-pulse">
+                            <i class="fa-solid fa-gears"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                                <span id="monitor-title">Đang phân tích dữ liệu hàng loạt...</span>
+                                <span id="monitor-tag" class="text-[10px] px-2 py-0.5 rounded-md font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Single Process Active</span>
+                            </h3>
+                            <span id="monitor-filename" class="text-xs text-slate-400 font-mono">Tệp: comment_data.xlsx</span>
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Thời gian thực thi</span>
+                        <div id="monitor-elapsed" class="text-xs font-mono font-bold text-indigo-300">0.0s</div>
+                    </div>
+                </div>
+
+                <!-- 3D Animated Progress Bar -->
+                <div class="space-y-2 mb-6">
+                    <div class="flex justify-between text-xs font-semibold">
+                        <span id="monitor-progress-text" class="text-slate-300">Đang xử lý: 0 / 0 câu</span>
+                        <span id="monitor-percentage" class="font-mono text-indigo-400 font-bold">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-950 rounded-full h-4 p-[2px] progress-3d overflow-hidden">
+                        <div id="monitor-progress-bar" 
+                             class="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 h-full rounded-full progress-bar-glow transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.6)]" 
+                             style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Current Sentence Snippet Ticker -->
+                <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping shrink-0"></span>
+                    <span class="text-slate-400 shrink-0 font-medium">Đang xử lý:</span>
+                    <span id="monitor-current-text" class="text-slate-200 truncate italic font-mono">Đang khởi tạo các tác vụ...</span>
+                </div>
+
+                <!-- Realtime Counters -->
+                <div class="mt-6 grid grid-cols-3 gap-3">
+                    <div class="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/20 text-center">
+                        <div class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Tích cực (POS)</div>
+                        <div id="stat-pos" class="text-xl sm:text-2xl font-black text-emerald-300 font-mono mt-0.5">0</div>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/20 text-center">
+                        <div class="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Trung tính (NEU)</div>
+                        <div id="stat-neu" class="text-xl sm:text-2xl font-black text-amber-300 font-mono mt-0.5">0</div>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-rose-950/30 border border-rose-500/20 text-center">
+                        <div class="text-[10px] uppercase font-bold text-rose-400 tracking-wider">Tiêu cực (NEG)</div>
+                        <div id="stat-neg" class="text-xl sm:text-2xl font-black text-rose-300 font-mono mt-0.5">0</div>
+                    </div>
+                </div>
+
+                <!-- Completion & Download Banner -->
+                <div id="bulk-completed-box" class="hidden mt-6 pt-6 border-t border-slate-800">
+                    <div class="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900/80 to-slate-900 border border-emerald-500/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-neon-emerald">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-xl shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-base font-extrabold text-white">Quá trình phân tích hoàn tất xuất sắc!</h4>
+                                <p class="text-xs text-slate-300 mt-0.5">Tệp CSV đã được định dạng chuẩn <span class="text-emerald-400 font-mono">UTF-8-SIG</span> hiển thị chuẩn tiếng Việt trong Excel.</p>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-wrap items-center gap-3 shrink-0">
+                            <button type="button" 
+                                    onclick="clearBulkTask()" 
+                                    class="inline-flex items-center justify-center gap-2 text-slate-300 hover:text-white font-bold text-xs sm:text-sm px-4 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 transition shadow-sm">
+                                <i class="fa-solid fa-folder-plus text-indigo-400"></i>
+                                <span>Phân Tích Tệp Khác</span>
+                            </button>
+                            <a id="btn-download-csv" 
+                               href="#" 
+                               download 
+                               class="inline-flex items-center justify-center gap-2.5 text-white font-black text-sm px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 shadow-3d-emerald active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
+                                <i class="fa-solid fa-download text-lg"></i>
+                                <span>Tải File CSV Kết Quả</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Live Preview Table of 10 Results -->
+                    <div class="mt-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h5 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                                <i class="fa-solid fa-table-list text-indigo-400"></i>
+                                <span>Xem trước 10 kết quả đầu tiên:</span>
+                            </h5>
+                            <span class="text-[11px] text-slate-500">Dữ liệu chi tiết đã được xuất đầy đủ trong file CSV</span>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/60">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-900/90 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+                                    <tr>
+                                        <th class="py-3 px-3 w-12 text-center">STT</th>
+                                        <th class="py-3 px-4">Bình luận</th>
+                                        <th class="py-3 px-3 w-28 text-center">Cảm xúc</th>
+                                        <th class="py-3 px-3 w-20 text-center">Độ tin cậy</th>
+                                        <th class="py-3 px-4">Phản hồi mẫu Gemini</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="preview-table-body" class="divide-y divide-slate-800/60">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="text-center text-xs text-slate-500 mt-12 pb-8 space-y-1.5 border-t border-slate-800/80 pt-6">
+            <p class="flex items-center justify-center gap-2 flex-wrap">
+                <span>PhoBERT Transformer</span> • <span>FastAPI Microservice</span> • <span>Gemini 3.1 Flash Lite (23 Keys Rotation)</span> • <span>Single-Process Bulk Engine</span>
+            </p>
+            <p>© 2026 Vietnamese Car Comments Sentiment Intelligence System</p>
+        </footer>
+
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        let currentPollingTaskId = null;
+        let pollingTimer = null;
+
+        // ===== TAB SWITCHING WITH PERSISTENCE =====
+        function switchTab(tab) {
+            localStorage.setItem('car_active_tab', tab);
+            const btnSingle = document.getElementById('tab-btn-single');
+            const btnBulk = document.getElementById('tab-btn-bulk');
+            const contentSingle = document.getElementById('tab-content-single');
+            const contentBulk = document.getElementById('tab-content-bulk');
+
+            if (tab === 'single') {
+                btnSingle.classList.add('active');
+                btnBulk.classList.remove('active');
+                contentSingle.classList.remove('hidden');
+                contentBulk.classList.add('hidden');
+            } else {
+                btnBulk.classList.add('active');
+                btnSingle.classList.remove('active');
+                contentBulk.classList.remove('hidden');
+                contentSingle.classList.add('hidden');
+            }
+        }
+
+        // ===== SINGLE COMMENT LOGIC & PERSISTENCE =====
+        function setSample(text) {
+            const textarea = document.getElementById('text');
+            textarea.value = text;
+            textarea.focus();
+        }
+
+        function renderSingleResult(res, inputText) {
+            if (!res) return;
+            const card = document.getElementById('single-result-card');
+            const badgeBox = document.getElementById('res-badge-box');
+            const banner = document.getElementById('res-banner');
+            const emojiBox = document.getElementById('res-emoji-box');
+            const emojiIcon = document.getElementById('res-emoji-icon');
+            const label = document.getElementById('res-label');
+            const code = document.getElementById('res-code');
+            const conf = document.getElementById('res-confidence');
+            const timeText = document.getElementById('res-process-time');
+            const warningBox = document.getElementById('res-warning-box');
+            const warningText = document.getElementById('res-warning-text');
+            const btnReset = document.getElementById('btn-clear-single');
+
+            if (inputText) {
+                document.getElementById('text').value = inputText;
+            }
+            if (btnReset) btnReset.classList.remove('hidden');
+
+            card.classList.remove('hidden', 'border-emerald-500/30', 'shadow-neon-emerald', 'border-rose-500/30', 'shadow-neon-rose', 'border-amber-500/30', 'shadow-neon-amber');
+            badgeBox.className = 'w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-lg';
+            banner.className = 'p-6 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 border';
+            emojiBox.className = 'w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-2xl border border-white/10';
+
+            if (res.sentiment === 'POS') {
+                card.classList.add('border-emerald-500/30', 'shadow-neon-emerald');
+                badgeBox.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/40');
+                banner.classList.add('bg-gradient-to-br', 'from-emerald-950/60', 'via-emerald-900/20', 'to-slate-900/80', 'border-emerald-500/30');
+                emojiBox.classList.add('bg-emerald-500/20', 'text-emerald-300', 'shadow-[0_0_20px_rgba(16,185,129,0.3)]');
+                emojiIcon.className = 'fa-solid fa-face-laugh-beam';
+                conf.className = 'text-3xl font-black mt-0.5 tracking-tight font-mono text-emerald-400';
+            } else if (res.sentiment === 'NEG') {
+                card.classList.add('border-rose-500/30', 'shadow-neon-rose');
+                badgeBox.classList.add('bg-rose-500/20', 'text-rose-400', 'border', 'border-rose-500/40');
+                banner.classList.add('bg-gradient-to-br', 'from-rose-950/60', 'via-rose-900/20', 'to-slate-900/80', 'border-rose-500/30');
+                emojiBox.classList.add('bg-rose-500/20', 'text-rose-300', 'shadow-[0_0_20px_rgba(244,63,94,0.3)]');
+                emojiIcon.className = 'fa-solid fa-face-frown-open';
+                conf.className = 'text-3xl font-black mt-0.5 tracking-tight font-mono text-rose-400';
+            } else {
+                card.classList.add('border-amber-500/30', 'shadow-neon-amber');
+                badgeBox.classList.add('bg-amber-500/20', 'text-amber-400', 'border', 'border-amber-500/40');
+                banner.classList.add('bg-gradient-to-br', 'from-amber-950/60', 'via-amber-900/20', 'to-slate-900/80', 'border-amber-500/30');
+                emojiBox.classList.add('bg-amber-500/20', 'text-amber-300', 'shadow-[0_0_20px_rgba(245,158,11,0.3)]');
+                emojiIcon.className = 'fa-solid fa-face-meh';
+                conf.className = 'text-3xl font-black mt-0.5 tracking-tight font-mono text-amber-400';
+            }
+
+            label.innerText = res.label || (res.sentiment === 'POS' ? 'TÍCH CỰC' : res.sentiment === 'NEG' ? 'TIÊU CỰC' : 'TRUNG TÍNH');
+            code.innerText = res.sentiment || 'NEU';
+            
+            let confVal = res.confidence;
+            if (typeof confVal === 'number') {
+                confVal = (confVal * 100).toFixed(2) + '%';
+            } else if (confVal && !confVal.toString().includes('%')) {
+                confVal = confVal + '%';
+            }
+            conf.innerText = confVal || '0.00%';
+            timeText.innerText = (res.process_time_ms || 15.0) + ' ms';
+
+            if (res.warning) {
+                warningBox.classList.remove('hidden');
+                warningText.innerText = res.warning;
+            } else {
+                warningBox.classList.add('hidden');
+            }
+
+            // Bars
+            const scores = res.detail_scores || {};
+            const posPct = ((scores.POS || 0) * 100).toFixed(2);
+            const neuPct = ((scores.NEU || 0) * 100).toFixed(2);
+            const negPct = ((scores.NEG || 0) * 100).toFixed(2);
+
+            document.getElementById('res-prob-pos-val').innerText = posPct + '%';
+            document.getElementById('res-prob-pos-bar').style.width = posPct + '%';
+            document.getElementById('res-prob-neu-val').innerText = neuPct + '%';
+            document.getElementById('res-prob-neu-bar').style.width = neuPct + '%';
+            document.getElementById('res-prob-neg-val').innerText = negPct + '%';
+            document.getElementById('res-prob-neg-bar').style.width = negPct + '%';
+        }
+
+        function renderGeminiResult(d) {
+            if (!d) return;
+            const container = document.getElementById('deep-analyst-container');
+            const loading = document.getElementById('ai-loading');
+            const output = document.getElementById('ai-output');
+            const errBox = document.getElementById('ai-error');
+
+            container.classList.remove('hidden');
+            loading.classList.add('hidden');
+            errBox.classList.add('hidden');
+            output.classList.remove('hidden');
+
+            document.getElementById('ai-key-used').innerText = (d.key_used || 'Key #1') + (d.from_cache ? ' (Cached)' : '');
+
+            const haiLongBox = document.getElementById('ai-hai-long');
+            if (d.hai_long && d.hai_long.length > 0) {
+                haiLongBox.innerHTML = '<ul class="list-disc list-inside space-y-1.5">' + 
+                    d.hai_long.map(item => `<li>${item}</li>`).join('') + '</ul>';
+            } else {
+                haiLongBox.innerHTML = '<p class="text-slate-500 italic">Khách hàng không đề cập hoặc chưa hài lòng về khía cạnh nào.</p>';
+            }
+
+            const chuaHaiLongBox = document.getElementById('ai-chua-hai-long');
+            if (d.chua_hai_long && d.chua_hai_long.length > 0) {
+                chuaHaiLongBox.innerHTML = '<ul class="list-disc list-inside space-y-1.5">' + 
+                    d.chua_hai_long.map(item => `<li>${item}</li>`).join('') + '</ul>';
+            } else {
+                chuaHaiLongBox.innerHTML = '<p class="text-slate-500 italic">Không có điểm chê bai hay phàn nàn rõ rệt.</p>';
+            }
+
+            const mktBox = document.getElementById('ai-marketing');
+            if (d.de_xuat_marketing && d.de_xuat_marketing.length > 0) {
+                mktBox.innerHTML = '<ul class="list-disc list-inside space-y-1.5">' + 
+                    d.de_xuat_marketing.map(item => `<li>${item}</li>`).join('') + '</ul>';
+            } else {
+                mktBox.innerHTML = '<p class="text-slate-500 italic">Duy trì tương tác chăm sóc khách hàng định kỳ.</p>';
+            }
+
+            document.getElementById('ai-reply-text').innerText = d.cau_phan_hoi_mau || 'Cảm ơn bạn đã đóng góp ý kiến!';
+        }
+
+        function clearSingleResult() {
+            document.getElementById('text').value = '';
+            document.getElementById('single-result-card').classList.add('hidden');
+            document.getElementById('deep-analyst-container').classList.add('hidden');
+            document.getElementById('btn-clear-single').classList.add('hidden');
+            localStorage.removeItem('car_single_input');
+            localStorage.removeItem('car_single_result');
+            localStorage.removeItem('car_single_gemini');
+            showToast('Đã làm mới khung phân tích!');
+        }
+
+        async function callDeepAnalyst() {
+            let text = document.getElementById('text').value.trim();
+            let sentiment = document.getElementById('res-label') ? document.getElementById('res-label').innerText : '';
+            if (!text) {
+                text = localStorage.getItem('car_single_input') || '';
+            }
+            if (!text) {
+                showToast("Vui lòng nhập bình luận trước!", true);
+                return;
+            }
+
+            const container = document.getElementById('deep-analyst-container');
+            const loading = document.getElementById('ai-loading');
+            const output = document.getElementById('ai-output');
+            const errBox = document.getElementById('ai-error');
+            const btn = document.getElementById('btn-deep-analyze');
+
+            container.classList.remove('hidden');
+            loading.classList.remove('hidden');
+            output.classList.add('hidden');
+            errBox.classList.add('hidden');
+            btn.disabled = true;
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+
+            try {
+                const res = await fetch('/api/deep_analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text, sentiment: sentiment })
+                });
+
+                const json = await res.json();
+                loading.classList.add('hidden');
+
+                if (json.success && json.data) {
+                    // Lưu cache vào localStorage để khi F5 không bị mất
+                    localStorage.setItem('car_single_gemini', JSON.stringify(json.data));
+                    renderGeminiResult(json.data);
+                } else {
+                    errBox.innerText = json.error || 'Có lỗi xảy ra khi phân tích bằng Gemini AI.';
+                    errBox.classList.remove('hidden');
+                }
+            } catch (err) {
+                loading.classList.add('hidden');
+                errBox.innerText = 'Lỗi kết nối: ' + err.message;
+                errBox.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-60', 'cursor-not-allowed');
+            }
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const icon = document.getElementById('toast-icon');
+            toastMsg.innerText = msg;
+            if (isError) {
+                icon.className = "w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-sm font-bold";
+                icon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+            } else {
+                icon.className = "w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-bold";
+                icon.innerHTML = '<i class="fa-solid fa-check"></i>';
+            }
+            toast.classList.remove('translate-y-[-150%]', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-[-150%]', 'opacity-0');
+            }, 3500);
+        }
+
+        function copyReplyText() {
+            const txt = document.getElementById('ai-reply-text').innerText;
+            if (txt) {
+                navigator.clipboard.writeText(txt).then(() => {
+                    showToast('Đã sao chép câu trả lời mẫu vào clipboard!');
+                }).catch(() => {
+                    showToast('Không thể tự động sao chép, vui lòng dùng Ctrl+C.', true);
+                });
+            }
+        }
+
+        // ===== BULK FILE DRAG & DROP =====
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('bulk-file-input');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-indigo-400', 'bg-indigo-950/20');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-indigo-400', 'bg-indigo-950/20');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-400', 'bg-indigo-950/20');
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelected();
+            }
+        });
+
+        function handleFileSelected() {
+            if (fileInput.files.length === 0) return;
+            const file = fileInput.files[0];
+            document.getElementById('selected-filename').innerText = file.name;
+            document.getElementById('selected-filesize').innerText = (file.size / 1024).toFixed(1) + ' KB';
+            
+            const ext = file.name.split('.').pop().toLowerCase();
+            const icon = document.getElementById('selected-file-icon');
+            if (ext === 'xlsx' || ext === 'xls') {
+                icon.className = "fa-solid fa-file-excel text-emerald-400 text-xl";
+            } else if (ext === 'csv') {
+                icon.className = "fa-solid fa-file-csv text-cyan-400 text-xl";
+            } else {
+                icon.className = "fa-solid fa-file-lines text-indigo-400 text-xl";
+            }
+
+            document.getElementById('drop-zone-idle').classList.add('hidden');
+            document.getElementById('drop-zone-selected').classList.remove('hidden');
+        }
+
+        function clearSelectedFile(e) {
+            if (e) e.stopPropagation();
+            fileInput.value = "";
+            document.getElementById('drop-zone-selected').classList.add('hidden');
+            document.getElementById('drop-zone-idle').classList.remove('hidden');
+        }
+
+        function useSampleTxt() {
+            const sampleComments = [
+                "Xe này chạy rất êm, nội thất hoàn thiện tốt và cực kỳ tiết kiệm điện!",
+                "Chạy được 3 tháng đã lỗi pin, đại lý bảo hành thiếu trách nhiệm quá thất vọng",
+                "Tiện cho mình xin phép hỏi chi phí lăn bánh và thủ tục trả góp với ạ?",
+                "Tầm tiền này chọn VF3 là quá hợp lý cho chị em đi phố che mưa nắng",
+                "Điều hòa mát sâu, cách âm tốt nhưng phần mềm thỉnh thoảng còn đơ",
+                "Xe đi rung lắc khi lên cao tốc, cảm giác lái không an toàn tí nào",
+                "Chính sách miễn phí sạc pin của hãng đợt này rất được lòng người dùng",
+                "Đang tính mua mà lăn tăn vụ trạm sạc ở tỉnh lẻ quá mọi người ơi",
+                "Hệ thống phanh ABS hoạt động nhạy, cảm biến lùi rất chuẩn xác",
+                "Dịch vụ cứu hộ 24/7 đến chậm hơn 2 tiếng đồng hồ làm lỡ hết việc",
+                "550tr lăn bánh còn thừa cầm về, gầm cao 5 chỗ mới tinh lh: 0918.079.865",
+                "Xe điện bảo dưỡng định kỳ chi phí rẻ hơn nhiều so với xe xăng",
+                "Màu xe thực tế bên ngoài nhìn bóng bẩy và sang hơn trong ảnh chụp",
+                "Cốp sau hơi nhỏ nếu đi du lịch cả gia đình thì hơi chật chội",
+                "Đã lái thử và cọc luôn bản Plus, trải nghiệm lái vượt tầm giá tiền"
+            ];
+            const blob = new Blob([sampleComments.join('\n')], { type: 'text/plain;charset=utf-8' });
+            const sampleFile = new File([blob], "sample_15_car_comments.txt", { type: 'text/plain' });
+
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(sampleFile);
+            fileInput.files = dataTransfer.files;
+            handleFileSelected();
+            showToast("Đã tải dữ liệu mẫu 15 bình luận xe!");
+        }
+
+        // ===== BULK SUBMIT & POLLING =====
+        async function submitBulkForm(e) {
+            e.preventDefault();
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showToast("Vui lòng chọn file .TXT, .XLSX hoặc .CSV trước!", true);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            const deepAnalyst = document.getElementById('chk-deep-analyst').checked;
+            formData.append('deep_analyst', deepAnalyst ? 'true' : 'false');
+
+            const btn = document.getElementById('btn-start-bulk');
+            btn.disabled = true;
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+
+            try {
+                const res = await fetch('/bulk/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (res.status === 409 || data.busy) {
+                    showToast(data.error || "Hệ thống đang bận chạy 1 tiến trình khác!", true);
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-60', 'cursor-not-allowed');
+                    checkBulkInitialState();
+                    return;
+                }
+
+                if (!data.success) {
+                    showToast(data.error || "Lỗi khởi chạy phân tích hàng loạt!", true);
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-60', 'cursor-not-allowed');
+                    return;
+                }
+
+                showToast(`Đã khởi chạy phân tích ${data.total} bình luận!`);
+                currentPollingTaskId = data.task_id;
+                localStorage.setItem('car_bulk_task_id', data.task_id);
+                localStorage.setItem('car_active_tab', 'bulk');
+                startBulkPolling(data.task_id);
+
+            } catch (err) {
+                showToast("Lỗi mạng: " + err.message, true);
+                btn.disabled = false;
+                btn.classList.remove('opacity-60', 'cursor-not-allowed');
+            }
+        }
+
+        function startBulkPolling(taskId) {
+            const monitorCard = document.getElementById('bulk-monitor-card');
+            monitorCard.classList.remove('hidden');
+            document.getElementById('bulk-completed-box').classList.add('hidden');
+
+            if (pollingTimer) clearInterval(pollingTimer);
+            pollingTimer = setInterval(() => pollStatus(taskId), 1000);
+            pollStatus(taskId);
+        }
+
+        async function pollStatus(taskId) {
+            try {
+                const res = await fetch('/bulk/status?task_id=' + (taskId || ''));
+                const st = await res.json();
+                updateBulkUI(st);
+
+                if (st.status === 'completed' || st.status === 'error') {
+                    clearInterval(pollingTimer);
+                    pollingTimer = null;
+                    const btn = document.getElementById('btn-start-bulk');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-60', 'cursor-not-allowed');
+                    }
+
+                    if (st.status === 'completed') {
+                        showToast("Tiến trình phân tích hàng loạt đã hoàn tất!");
+                    } else if (st.status === 'error') {
+                        showToast("Tiến trình gặp lỗi: " + (st.error || ""), true);
+                    }
+                }
+            } catch (e) {
+                console.error("Polling error:", e);
+            }
+        }
+
+        function updateBulkUI(st) {
+            // Cập nhật indicator trạng thái Single Process
+            const dot = document.getElementById('lock-indicator-dot');
+            const lockText = document.getElementById('lock-status-text');
+            if (st.is_running) {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping";
+                lockText.innerHTML = `Đang khóa: <span class="text-amber-300 font-bold">${st.current}/${st.total}</span>`;
+            } else {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+                lockText.innerText = "Single Process: Sẵn sàng";
+            }
+
+            if (!st || st.status === 'idle') return;
+
+            // Lưu task_id vào localStorage để khi F5 tự khôi phục
+            if (st.task_id) {
+                localStorage.setItem('car_bulk_task_id', st.task_id);
+            }
+
+            const monitorCard = document.getElementById('bulk-monitor-card');
+            monitorCard.classList.remove('hidden');
+
+            document.getElementById('monitor-filename').innerText = `Tệp: ${st.filename || 'Dữ liệu tải lên'}`;
+            document.getElementById('monitor-elapsed').innerText = `${st.elapsed_seconds || 0}s`;
+            document.getElementById('monitor-progress-text').innerText = `Đang xử lý: ${st.current || 0} / ${st.total || 0} câu`;
+            document.getElementById('monitor-percentage').innerText = `${st.progress_pct || 0}%`;
+            document.getElementById('monitor-progress-bar').style.width = `${st.progress_pct || 0}%`;
+            document.getElementById('monitor-current-text').innerText = st.current_text || 'Đang chuẩn bị...';
+
+            // Counters
+            if (st.summary) {
+                document.getElementById('stat-pos').innerText = st.summary.POS || 0;
+                document.getElementById('stat-neu').innerText = st.summary.NEU || 0;
+                document.getElementById('stat-neg').innerText = st.summary.NEG || 0;
+            }
+
+            // Hoàn tất
+            if (st.status === 'completed') {
+                document.getElementById('monitor-title').innerText = "Phân tích hoàn tất thành công!";
+                document.getElementById('monitor-icon').className = "w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-lg shadow-lg";
+                document.getElementById('monitor-icon').innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                
+                const compBox = document.getElementById('bulk-completed-box');
+                compBox.classList.remove('hidden');
+
+                if (st.csv_download_url) {
+                    const dlBtn = document.getElementById('btn-download-csv');
+                    dlBtn.href = st.csv_download_url;
+                }
+
+                // Render Preview Table
+                if (st.preview && st.preview.length > 0) {
+                    const tbody = document.getElementById('preview-table-body');
+                    tbody.innerHTML = st.preview.map(row => {
+                        let badgeClass = "bg-amber-500/20 text-amber-300 border-amber-500/30";
+                        if (row.sentiment === 'POS') badgeClass = "bg-emerald-500/20 text-emerald-300 border-emerald-500/30";
+                        if (row.sentiment === 'NEG') badgeClass = "bg-rose-500/20 text-rose-300 border-rose-500/30";
+
+                        return `
+                            <tr class="hover:bg-slate-900/60 transition">
+                                <td class="py-2.5 px-3 text-center font-mono text-slate-500">${row.stt}</td>
+                                <td class="py-2.5 px-4 font-normal text-slate-200 max-w-xs truncate" title="${row.text}">${row.text}</td>
+                                <td class="py-2.5 px-3 text-center">
+                                    <span class="px-2 py-0.5 rounded-md font-bold text-[10px] border ${badgeClass}">${row.label}</span>
+                                </td>
+                                <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-300">${row.confidence}</td>
+                                <td class="py-2.5 px-4 text-slate-400 italic max-w-sm truncate" title="${row.gemini_reply || ''}">${row.gemini_reply || '<span class="text-slate-600">Không bật</span>'}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        async function clearBulkTask() {
+            try {
+                await fetch('/bulk/clear', { method: 'POST' });
+            } catch (e) {
+                console.error("Clear bulk error:", e);
+            }
+            localStorage.removeItem('car_bulk_task_id');
+            document.getElementById('bulk-monitor-card').classList.add('hidden');
+            document.getElementById('bulk-completed-box').classList.add('hidden');
+            clearSelectedFile();
+            showToast('Đã làm mới khung phân tích hàng loạt!');
+        }
+
+        // Tự động khôi phục dữ liệu toàn diện khi tải trang hoặc F5
+        document.addEventListener("DOMContentLoaded", async () => {
+            // 1. Phục hồi Tab người dùng đã mở trước khi F5
+            const savedTab = localStorage.getItem('car_active_tab') || 'single';
+            switchTab(savedTab);
+
+            // 2. Phục hồi trạng thái Phân tích đơn lẻ (Single Comment)
+            {% if result %}
+                // Nếu server vừa trả về kết quả mới từ POST /predict
+                const serverResult = {{ result|tojson }};
+                const serverInput = `{{ input_text }}`.trim();
+                localStorage.setItem('car_single_input', serverInput);
+                localStorage.setItem('car_single_result', JSON.stringify(serverResult));
+                if (localStorage.getItem('car_last_gemini_input') !== serverInput) {
+                    localStorage.removeItem('car_single_gemini');
+                }
+                const btnReset = document.getElementById('btn-clear-single');
+                if (btnReset) btnReset.classList.remove('hidden');
+            {% else %}
+                // Nếu người dùng F5 tải lại trang bằng GET
+                const cachedInput = localStorage.getItem('car_single_input');
+                const cachedResultStr = localStorage.getItem('car_single_result');
+                if (cachedResultStr) {
+                    try {
+                        const cachedRes = JSON.parse(cachedResultStr);
+                        renderSingleResult(cachedRes, cachedInput);
+                        
+                        // Phục hồi nhận xét Gemini AI nếu trước đó đã bấm phân tích
+                        const cachedGeminiStr = localStorage.getItem('car_single_gemini');
+                        if (cachedGeminiStr) {
+                            renderGeminiResult(JSON.parse(cachedGeminiStr));
+                        }
+                    } catch (e) {
+                        console.error("Lỗi phục hồi kết quả Single:", e);
+                    }
+                }
+            {% endif %}
+
+            // 3. Phục hồi trạng thái Phân tích hàng loạt (Bulk Analyst)
+            const savedTaskId = localStorage.getItem('car_bulk_task_id') || '';
+            try {
+                const res = await fetch('/bulk/status?task_id=' + encodeURIComponent(savedTaskId));
+                const st = await res.json();
+                if (st && (st.status === 'running' || st.status === 'completed')) {
+                    updateBulkUI(st);
+                    if (st.status === 'running') {
+                        startBulkPolling(st.task_id);
+                    }
+                }
+            } catch (e) {
+                console.error("Lỗi phục hồi kết quả Bulk:", e);
+            }
+        });
+    </script>
+</body>
+</html>
