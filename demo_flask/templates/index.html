@@ -163,28 +163,49 @@
         .glow-active {
             animation: pulse-glow 3s infinite ease-in-out;
         }
+
+        /* Mobile Touch & Scroll Optimizations */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        .custom-scroll {
+            -webkit-overflow-scrolling: touch;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            height: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 9999px;
+        }
     </style>
 </head>
 <body class="min-h-screen text-slate-200 font-sans antialiased selection:bg-indigo-500 selection:text-white">
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-150%] opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 bg-slate-900/95 border border-indigo-500/40 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl">
-        <div id="toast-icon" class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm font-bold">
-            <i class="fa-solid fa-check"></i>
+    <!-- Toast Notification (Responsive Centered on Mobile) -->
+    <div id="toast" class="fixed top-4 left-4 right-4 sm:left-auto sm:right-5 sm:w-auto max-w-md mx-auto z-50 transform translate-y-[-150%] opacity-0 transition-all duration-300 pointer-events-none flex items-center justify-between sm:justify-start gap-3 bg-slate-900/95 border border-indigo-500/40 text-white px-4 sm:px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl">
+        <div class="flex items-center gap-3">
+            <div id="toast-icon" class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm font-bold shrink-0">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <span id="toast-msg" class="text-xs sm:text-sm font-medium">Thông báo</span>
         </div>
-        <span id="toast-msg" class="text-sm font-medium">Thông báo</span>
     </div>
 
-    <div class="max-w-5xl mx-auto py-10 px-4 sm:px-6">
+    <div class="max-w-5xl mx-auto py-6 sm:py-10 px-3.5 sm:px-6">
         
         <!-- 3D HERO HEADER -->
-        <header class="text-center mb-8 relative">
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-32 bg-indigo-600/20 blur-[90px] rounded-full pointer-events-none -z-10"></div>
+        <header class="text-center mb-6 sm:mb-8 relative">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 sm:w-80 h-28 sm:h-32 bg-indigo-600/20 blur-[90px] rounded-full pointer-events-none -z-10"></div>
 
-            <div class="inline-flex items-center justify-center relative mb-4 group cursor-pointer">
+            <div class="inline-flex items-center justify-center relative mb-3 sm:mb-4 group cursor-pointer">
                 <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-cyan-400 to-purple-500 rounded-3xl blur-md opacity-70 group-hover:opacity-100 transition duration-500 glow-active"></div>
                 
-                <div class="relative w-20 h-20 bg-slate-900/90 border border-white/20 rounded-2xl p-2.5 flex items-center justify-center shadow-2xl backdrop-blur-xl transform transition duration-300 group-hover:scale-105">
+                <div class="relative w-16 h-16 sm:w-20 sm:h-20 bg-slate-900/90 border border-white/20 rounded-2xl p-2 sm:p-2.5 flex items-center justify-center shadow-2xl backdrop-blur-xl transform transition duration-300 group-hover:scale-105">
                     <img src="/favicon.webp" 
                          onerror="this.src='data:image/webp;base64,UklGRnQBAABXRUJQVlA4IGgBAACwCACdASogACAAPtE+tFooIigoFAEAGglsALEMQ7wOABVQHW5egB0j/2zeyAYAJlLnM/W5+uSHQy9axBgB7kWXBwQaD/NWCjcwCp7u4AAA/th/JvO2QzPb4Xce1PphLcmxzZBUizt+usIyAaFApuEvOAfyN8XLAsoK+wygPX7Hszc+FH6yaaKqR4r50J2Z9RpxT5JG015GoWf8ii+kqVYY15hasmaNMLQ6+H6QI+/zIb/Xpnvyx9j9tVns+RhJVL+/cDA/9J0kVTLYkrsbGd8amQLpzF/LmHyf3fKNgb87oFillAN4AIqWW2mjtNj2pE/TB7o7TaTJQiZUFuL846tnMy6Y6gylvaOpBN4w3v/+BHX7EG6vE4FHpfLJFx6USP9WiLzrbV0YBX0vTNLn+Mfu58iLQU5n7mBGfUYHp8VfmuL861I5qL88O6uVP1EMWzZVlq6vREQ/pn9yZ/zY026629mBNHKmgAA='"
                          alt="Favicon Logo" 
@@ -192,32 +213,32 @@
                 </div>
             </div>
 
-            <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white flex items-center justify-center gap-2.5">
+            <h1 class="text-2xl sm:text-4xl font-black tracking-tight text-white flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 leading-tight">
                 <span>AI Car Sentiment Intelligence</span>
-                <span class="text-xs uppercase px-2.5 py-1 rounded-full font-bold bg-gradient-to-r from-blue-500 to-indigo-600 text-white border border-white/20 shadow-md">3D Pro</span>
+                <span class="text-[10px] sm:text-xs uppercase px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full font-bold bg-gradient-to-r from-blue-500 to-indigo-600 text-white border border-white/20 shadow-md">3D Pro</span>
             </h1>
-            <p class="text-slate-400 mt-2 text-sm sm:text-base max-w-xl mx-auto font-normal">
+            <p class="text-slate-400 mt-2 text-xs sm:text-base max-w-xl mx-auto font-normal px-2 leading-relaxed">
                 Hệ thống thẩm định cảm xúc đa tầng <span class="text-indigo-400 font-semibold">PhoBERT</span> & Trí tuệ Nhân tạo <span class="text-purple-400 font-semibold">Gemini Flash Lite</span>
             </p>
         </header>
 
-        <!-- 3D DUAL-TAB SELECTOR -->
-        <div class="flex justify-center mb-8">
-            <div class="inline-flex p-1.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-2xl backdrop-blur-xl">
+        <!-- 3D DUAL-TAB SELECTOR (Optimized 100% width on Mobile) -->
+        <div class="flex justify-center mb-6 sm:mb-8 w-full">
+            <div class="inline-flex w-full sm:w-auto p-1 sm:p-1.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-2xl backdrop-blur-xl">
                 <button type="button" 
                         id="tab-btn-single" 
                         onclick="switchTab('single')" 
-                        class="tab-btn active px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 text-slate-300 hover:text-white border border-transparent">
+                        class="tab-btn active flex-1 sm:flex-initial px-3 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 text-slate-300 hover:text-white border border-transparent whitespace-nowrap">
                     <i class="fa-solid fa-feather-pointed text-indigo-400"></i>
-                    <span>Phân Tích Đơn Lẻ (Single Text)</span>
+                    <span>Phân Tích Đơn Lẻ</span>
                 </button>
                 <button type="button" 
                         id="tab-btn-bulk" 
                         onclick="switchTab('bulk')" 
-                        class="tab-btn px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 text-slate-400 hover:text-white border border-transparent">
+                        class="tab-btn flex-1 sm:flex-initial px-3 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 text-slate-400 hover:text-white border border-transparent whitespace-nowrap">
                     <i class="fa-solid fa-layer-group text-purple-400"></i>
-                    <span>Phân Tích Hàng Loạt (Bulk Analyst)</span>
-                    <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">TXT/Excel/CSV</span>
+                    <span>Phân Tích Hàng Loạt</span>
+                    <span class="hidden md:inline-block text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">TXT/Excel/CSV</span>
                 </button>
             </div>
         </div>
@@ -226,19 +247,19 @@
         <div id="tab-content-single">
             
             <!-- 3D INPUT CARD -->
-            <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden">
+            <div class="glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-8 mb-6 sm:mb-8 relative overflow-hidden">
                 <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent"></div>
 
                 <form action="/predict" method="POST">
                     <div class="flex items-center justify-between mb-2.5">
-                        <label for="text" class="font-bold text-slate-200 text-sm sm:text-base flex items-center gap-2">
+                        <label for="text" class="font-bold text-slate-200 text-xs sm:text-base flex items-center gap-1.5 sm:gap-2">
                             <i class="fa-solid fa-comment-dots text-indigo-400"></i>
                             <span>Nội dung bình luận xe hơi cần thẩm định:</span>
                         </label>
-                        <span class="text-xs text-slate-500 font-mono">Tiếng Việt • UTF-8</span>
+                        <span class="text-[10px] sm:text-xs text-slate-500 font-mono">Tiếng Việt • UTF-8</span>
                     </div>
 
-                    <!-- 3D Recessed Textarea -->
+                    <!-- 3D Recessed Textarea (text-base avoids iOS Safari auto-zoom) -->
                     <div class="relative rounded-2xl overflow-hidden p-[1px] bg-gradient-to-b from-slate-700/60 to-slate-800/20 focus-within:from-indigo-500 focus-within:to-cyan-400 transition-all duration-300 shadow-inner">
                         <textarea 
                             id="text" 
@@ -246,93 +267,91 @@
                             rows="4" 
                             required
                             placeholder="Nhập nhận xét về xe, cảm giác lái, pin, bảo hành, giá lăn bánh... (Ví dụ: Xe này đi êm và rất tiết kiệm điện)"
-                            class="w-full bg-slate-900/90 text-slate-100 rounded-2xl p-4 focus:outline-none resize-none placeholder:text-slate-500 text-sm sm:text-base font-normal shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]"
+                            class="w-full bg-slate-900/90 text-slate-100 rounded-2xl p-3 sm:p-4 focus:outline-none resize-none placeholder:text-slate-500 text-base sm:text-sm font-normal shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] leading-relaxed"
                         >{{ input_text or '' }}</textarea>
                     </div>
 
                     <!-- 3D Tactile Quick Test Chips -->
                     <div class="mt-4">
-                        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                             <i class="fa-solid fa-gamepad text-indigo-400"></i>
                             <span>Chọn nhanh mẫu kiểm thử thực tế (Facebook Car Comments):</span>
                         </div>
-                        <div class="flex flex-wrap gap-2.5">
+                        <div class="flex flex-wrap gap-1.5 sm:gap-2.5">
                             <button type="button" onclick="setSample('Xe này chạy rất êm, nội thất hoàn thiện tốt và cực kỳ tiết kiệm điện!')" 
-                                    class="chip-3d text-xs font-semibold px-3.5 py-2 rounded-xl bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-900/50 flex items-center gap-1.5">
+                                    class="chip-3d text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-900/50 flex items-center gap-1.5">
                                 <i class="fa-regular fa-thumbs-up text-emerald-400"></i> Tích cực (POS)
                             </button>
                             
                             <button type="button" onclick="setSample('Chạy được 3 tháng đã lỗi pin, đại lý bảo hành thiếu trách nhiệm quá thất vọng')" 
-                                    class="chip-3d text-xs font-semibold px-3.5 py-2 rounded-xl bg-rose-950/40 text-rose-300 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-900/50 flex items-center gap-1.5">
+                                    class="chip-3d text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-rose-950/40 text-rose-300 border border-rose-500/30 hover:border-rose-400 hover:bg-rose-900/50 flex items-center gap-1.5">
                                 <i class="fa-regular fa-thumbs-down text-rose-400"></i> Tiêu cực (NEG)
                             </button>
 
                             <button type="button" onclick="setSample('Tiện cho mình xin phép hỏi chi phí lăn bánh và thủ tục trả góp với ạ?')" 
-                                    class="chip-3d text-xs font-semibold px-3.5 py-2 rounded-xl bg-amber-950/40 text-amber-300 border border-amber-500/30 hover:border-amber-400 hover:bg-amber-900/50 flex items-center gap-1.5">
+                                    class="chip-3d text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-amber-950/40 text-amber-300 border border-amber-500/30 hover:border-amber-400 hover:bg-amber-900/50 flex items-center gap-1.5">
                                 <i class="fa-regular fa-circle-question text-amber-400"></i> Trung tính (NEU)
                             </button>
 
                             <button type="button" onclick="setSample('550tr lăn bánh còn thừa cầm về, gầm cao 5 chỗ mới tinh lh: 0918.079.865')" 
-                                    class="chip-3d text-xs font-semibold px-3.5 py-2 rounded-xl bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-900/50 flex items-center gap-1.5">
+                                    class="chip-3d text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-900/50 flex items-center gap-1.5">
                                 <i class="fa-solid fa-phone text-cyan-400"></i> Spam số ĐT cò mồi
                             </button>
 
                             <button type="button" onclick="setSample('@@@###$$$ xe này chán vkl 😡😡😡')" 
-                                    class="chip-3d text-xs font-semibold px-3.5 py-2 rounded-xl bg-purple-950/40 text-purple-300 border border-purple-500/30 hover:border-purple-400 hover:bg-purple-900/50 flex items-center gap-1.5">
+                                    class="chip-3d text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-purple-950/40 text-purple-300 border border-purple-500/30 hover:border-purple-400 hover:bg-purple-900/50 flex items-center gap-1.5">
                                 <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> Ký tự lạ & Slang
                             </button>
                         </div>
                     </div>
 
                     <!-- 3D Action Submit Button & Reset -->
-                    <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <div class="mt-6 pt-4 border-t border-slate-800/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
                         <button type="button" 
                                 id="btn-clear-single" 
                                 onclick="clearSingleResult()" 
-                                class="hidden inline-flex items-center gap-2 text-slate-400 hover:text-rose-300 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition shadow-sm">
+                                class="hidden inline-flex items-center justify-center gap-2 text-slate-400 hover:text-rose-300 font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition shadow-sm w-full sm:w-auto">
                             <i class="fa-solid fa-rotate-left text-xs"></i>
                             <span>Làm Mới</span>
                         </button>
-                        <div class="ml-auto">
-                            <button type="submit" 
-                                    class="inline-flex items-center gap-2.5 text-white font-bold text-sm sm:text-base px-8 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 shadow-3d-btn active:shadow-3d-btn-active active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
-                                <i class="fa-solid fa-bolt-lightning text-yellow-300"></i>
-                                <span>Phân Tích Cảm Xúc</span>
-                            </button>
-                        </div>
+                        <button type="submit" 
+                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 text-white font-bold text-sm sm:text-base px-8 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 shadow-3d-btn active:shadow-3d-btn-active active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
+                            <i class="fa-solid fa-bolt-lightning text-yellow-300"></i>
+                            <span>Phân Tích Cảm Xúc</span>
+                        </button>
                     </div>
                 </form>
             </div>
 
             <!-- ERROR ALERT -->
             {% if error_msg %}
-            <div class="glass-panel border-l-4 border-rose-500 rounded-2xl p-5 mb-8 flex items-start gap-4 shadow-[0_10px_25px_rgba(244,63,94,0.15)] bg-rose-950/30">
-                <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 text-lg">
+            <div class="glass-panel border-l-4 border-rose-500 rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8 flex items-start gap-3 sm:gap-4 shadow-[0_10px_25px_rgba(244,63,94,0.15)] bg-rose-950/30">
+                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 text-base sm:text-lg">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
                 <div>
-                    <h4 class="font-bold text-rose-300 text-sm">Đầu vào không hợp lệ</h4>
+                    <h4 class="font-bold text-rose-300 text-xs sm:text-sm">Đầu vào không hợp lệ</h4>
                     <p class="text-xs sm:text-sm text-rose-200/80 mt-0.5">{{ error_msg }}</p>
                 </div>
             </div>
             {% endif %}
 
             <!-- 3D RESULT SHOWCASE CARD -->
-            <div id="single-result-card" class="glass-panel rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden {% if not result %}hidden{% else %}{% if result.sentiment == 'POS' %} border-emerald-500/30 shadow-neon-emerald{% elif result.sentiment == 'NEG' %} border-rose-500/30 shadow-neon-rose{% else %} border-amber-500/30 shadow-neon-amber{% endif %}{% endif %}">
+            <div id="single-result-card" class="glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-8 mb-6 sm:mb-8 relative overflow-hidden {% if not result %}hidden{% else %}{% if result.sentiment == 'POS' %} border-emerald-500/30 shadow-neon-emerald{% elif result.sentiment == 'NEG' %} border-rose-500/30 shadow-neon-rose{% else %} border-amber-500/30 shadow-neon-amber{% endif %}{% endif %}">
                 
-                <div class="flex items-center justify-between border-b border-slate-700/60 pb-4 mb-6">
-                    <div class="flex items-center gap-3">
-                        <div id="res-badge-box" class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-lg {% if result %}{% if result.sentiment == 'POS' %} bg-emerald-500/20 text-emerald-400 border border-emerald-500/40{% elif result.sentiment == 'NEG' %} bg-rose-500/20 text-rose-400 border border-rose-500/40{% else %} bg-amber-500/20 text-amber-400 border border-amber-500/40{% endif %}{% endif %}">
+                <div class="flex items-center justify-between border-b border-slate-700/60 pb-3.5 sm:pb-4 mb-4 sm:mb-6">
+                    <div class="flex items-center gap-2.5 sm:gap-3">
+                        <div id="res-badge-box" class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-base sm:text-lg shadow-lg shrink-0 {% if result %}{% if result.sentiment == 'POS' %} bg-emerald-500/20 text-emerald-400 border border-emerald-500/40{% elif result.sentiment == 'NEG' %} bg-rose-500/20 text-rose-400 border border-rose-500/40{% else %} bg-amber-500/20 text-amber-400 border border-amber-500/40{% endif %}{% endif %}">
                             <i class="fa-solid fa-chart-simple"></i>
                         </div>
                         <div>
-                            <h2 class="text-base sm:text-lg font-bold text-white">Kết Quả Nhận Diện PhoBERT</h2>
-                            <span class="text-xs text-slate-400">Xác thực cảm xúc dựa trên kiến trúc Deep Transformer</span>
+                            <h2 class="text-sm sm:text-lg font-bold text-white leading-tight">Kết Quả Nhận Diện PhoBERT</h2>
+                            <span class="text-[10px] sm:text-xs text-slate-400">Deep Transformer</span>
                         </div>
                     </div>
 
-                    <div class="text-right">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Thời gian suy luận</span>
+                    <div class="text-right shrink-0">
+                        <span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 tracking-wider">Thời gian</span>
                         <div class="text-xs font-mono font-bold text-indigo-300">
                             <i class="fa-regular fa-clock mr-1"></i><span id="res-process-time">{{ result.process_time_ms if result else '15.0' }} ms</span>
                         </div>
@@ -340,27 +359,27 @@
                 </div>
 
                 <!-- 3D Main Result Holographic Banner -->
-                <div id="res-banner" class="p-6 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 {% if result %}{% if result.sentiment == 'POS' %} bg-gradient-to-br from-emerald-950/60 via-emerald-900/20 to-slate-900/80 border border-emerald-500/30{% elif result.sentiment == 'NEG' %} bg-gradient-to-br from-rose-950/60 via-rose-900/20 to-slate-900/80 border border-rose-500/30{% else %} bg-gradient-to-br from-amber-950/60 via-amber-900/20 to-slate-900/80 border border-amber-500/30{% endif %}{% endif %}">
+                <div id="res-banner" class="p-4 sm:p-6 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 {% if result %}{% if result.sentiment == 'POS' %} bg-gradient-to-br from-emerald-950/60 via-emerald-900/20 to-slate-900/80 border border-emerald-500/30{% elif result.sentiment == 'NEG' %} bg-gradient-to-br from-rose-950/60 via-rose-900/20 to-slate-900/80 border border-rose-500/30{% else %} bg-gradient-to-br from-amber-950/60 via-amber-900/20 to-slate-900/80 border border-amber-500/30{% endif %}{% endif %}">
                     
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3.5 sm:gap-4">
                         <!-- 3D Giant Emoji Stamp -->
-                        <div id="res-emoji-box" class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-2xl border border-white/10 {% if result %}{% if result.sentiment == 'POS' %} bg-emerald-500/20 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)]{% elif result.sentiment == 'NEG' %} bg-rose-500/20 text-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.3)]{% else %} bg-amber-500/20 text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.3)]{% endif %}{% endif %}">
+                        <div id="res-emoji-box" class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl shadow-2xl border border-white/10 shrink-0 {% if result %}{% if result.sentiment == 'POS' %} bg-emerald-500/20 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)]{% elif result.sentiment == 'NEG' %} bg-rose-500/20 text-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.3)]{% else %} bg-amber-500/20 text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.3)]{% endif %}{% endif %}">
                             <i id="res-emoji-icon" class="{% if result %}{% if result.sentiment == 'POS' %}fa-solid fa-face-laugh-beam{% elif result.sentiment == 'NEG' %}fa-solid fa-face-frown-open{% else %}fa-solid fa-face-meh{% endif %}{% else %}fa-solid fa-face-smile{% endif %}"></i>
                         </div>
 
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Cảm xúc phân loại:</span>
-                            <div class="text-2xl sm:text-3xl font-extrabold text-white mt-0.5 tracking-tight flex items-center gap-2">
+                            <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Cảm xúc phân loại:</span>
+                            <div class="text-xl sm:text-3xl font-extrabold text-white mt-0.5 tracking-tight flex items-center gap-2">
                                 <span id="res-label">{{ result.label if result else '' }}</span>
-                                <span id="res-code" class="text-xs px-2 py-0.5 rounded-md font-mono bg-black/40 text-slate-300 border border-white/10">{{ result.sentiment if result else '' }}</span>
+                                <span id="res-code" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-md font-mono bg-black/40 text-slate-300 border border-white/10">{{ result.sentiment if result else '' }}</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- 3D Confidence Gauge -->
-                    <div class="sm:text-right border-t sm:border-t-0 sm:border-l border-slate-700/50 pt-3 sm:pt-0 sm:pl-6">
-                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Độ tin cậy (Confidence):</span>
-                        <div id="res-confidence" class="text-3xl font-black text-white mt-0.5 tracking-tight font-mono {% if result %}{% if result.sentiment == 'POS' %} text-emerald-400{% elif result.sentiment == 'NEG' %} text-rose-400{% else %} text-amber-400{% endif %}{% endif %}">
+                    <div class="flex items-center justify-between sm:block border-t sm:border-t-0 sm:border-l border-slate-700/50 pt-3 sm:pt-0 sm:pl-6">
+                        <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Độ tin cậy:</span>
+                        <div id="res-confidence" class="text-2xl sm:text-3xl font-black text-white mt-0.5 tracking-tight font-mono {% if result %}{% if result.sentiment == 'POS' %} text-emerald-400{% elif result.sentiment == 'NEG' %} text-rose-400{% else %} text-amber-400{% endif %}{% endif %}">
                             {{ "%.2f"|format(result.confidence * 100) if result else '0.00' }}%
                         </div>
                     </div>
@@ -368,13 +387,13 @@
 
                 <!-- Warning Callout -->
                 <div id="res-warning-box" class="{% if not result or not result.warning %}hidden{% endif %} mt-4 p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/30 text-amber-200 text-xs flex items-center gap-2.5">
-                    <i class="fa-solid fa-circle-exclamation text-amber-400 text-sm"></i>
+                    <i class="fa-solid fa-circle-exclamation text-amber-400 text-sm shrink-0"></i>
                     <span id="res-warning-text">{{ result.warning if result and result.warning else '' }}</span>
                 </div>
 
                 <!-- 3D Cylindrical Probability Bars -->
-                <div class="mt-6 space-y-3.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Xác suất phân phối 3 lớp cảm xúc:</span>
+                <div class="mt-5 sm:mt-6 space-y-3">
+                    <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block">Xác suất phân phối 3 lớp cảm xúc:</span>
                     
                     <!-- POS Bar -->
                     <div>
@@ -382,7 +401,7 @@
                             <span class="text-emerald-400 flex items-center gap-1.5"><i class="fa-solid fa-circle text-[7px]"></i> TÍCH CỰC (POS)</span>
                             <span id="res-prob-pos-val" class="font-mono text-emerald-300">{{ "%.2f"|format(result.detail_scores.POS * 100) if result and result.detail_scores else '0.00' }}%</span>
                         </div>
-                        <div class="w-full bg-slate-950 rounded-full h-3 p-[1px] progress-3d overflow-hidden">
+                        <div class="w-full bg-slate-950 rounded-full h-2.5 sm:h-3 p-[1px] progress-3d overflow-hidden">
                             <div id="res-prob-pos-bar" class="bg-gradient-to-r from-emerald-600 to-teal-400 h-full rounded-full progress-bar-glow transition-all duration-700 shadow-[0_0_12px_rgba(16,185,129,0.5)]" 
                                  style="width: {{ (result.detail_scores.POS * 100) if result and result.detail_scores else 0 }}%"></div>
                         </div>
@@ -394,7 +413,7 @@
                             <span class="text-amber-400 flex items-center gap-1.5"><i class="fa-solid fa-circle text-[7px]"></i> TRUNG TÍNH (NEU)</span>
                             <span id="res-prob-neu-val" class="font-mono text-amber-300">{{ "%.2f"|format(result.detail_scores.NEU * 100) if result and result.detail_scores else 0 }}%</span>
                         </div>
-                        <div class="w-full bg-slate-950 rounded-full h-3 p-[1px] progress-3d overflow-hidden">
+                        <div class="w-full bg-slate-950 rounded-full h-2.5 sm:h-3 p-[1px] progress-3d overflow-hidden">
                             <div id="res-prob-neu-bar" class="bg-gradient-to-r from-amber-600 to-yellow-400 h-full rounded-full progress-bar-glow transition-all duration-700 shadow-[0_0_12px_rgba(245,158,11,0.5)]" 
                                  style="width: {{ (result.detail_scores.NEU * 100) if result and result.detail_scores else 0 }}%"></div>
                         </div>
@@ -406,7 +425,7 @@
                             <span class="text-rose-400 flex items-center gap-1.5"><i class="fa-solid fa-circle text-[7px]"></i> TIÊU CỰC (NEG)</span>
                             <span id="res-prob-neg-val" class="font-mono text-rose-300">{{ "%.2f"|format(result.detail_scores.NEG * 100) if result and result.detail_scores else 0 }}%</span>
                         </div>
-                        <div class="w-full bg-slate-950 rounded-full h-3 p-[1px] progress-3d overflow-hidden">
+                        <div class="w-full bg-slate-950 rounded-full h-2.5 sm:h-3 p-[1px] progress-3d overflow-hidden">
                             <div id="res-prob-neg-bar" class="bg-gradient-to-r from-rose-600 to-red-400 h-full rounded-full progress-bar-glow transition-all duration-700 shadow-[0_0_12px_rgba(244,63,94,0.5)]" 
                                  style="width: {{ (result.detail_scores.NEG * 100) if result and result.detail_scores else 0 }}%"></div>
                         </div>
@@ -414,8 +433,8 @@
                 </div>
 
                 <!-- 3D Trigger Button: Deep Analyst with AI -->
-                <div class="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div class="text-xs text-slate-400">
+                <div class="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                    <div class="text-[11px] sm:text-xs text-slate-400 text-center sm:text-left">
                         <i class="fa-solid fa-microchip text-indigo-400 mr-1.5"></i>
                         <span>Tích hợp mô hình ngôn ngữ lớn để khai thác dữ liệu kinh doanh</span>
                     </div>
@@ -424,7 +443,7 @@
                         id="btn-deep-analyze"
                         type="button" 
                         onclick="callDeepAnalyst()"
-                        class="inline-flex items-center justify-center gap-2.5 text-white font-bold text-sm px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 shadow-3d-purple active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
+                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-white font-bold text-xs sm:text-sm px-6 py-3.5 sm:py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 shadow-3d-purple active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
                         <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
                         <span>✨ Deep Analyst with AI (Gemini)</span>
                     </button>
@@ -432,43 +451,43 @@
             </div>
 
             <!-- 3D AI SUGGESTION RESULT CONTAINER -->
-            <div id="deep-analyst-container" class="hidden mb-8">
+            <div id="deep-analyst-container" class="hidden mb-6 sm:mb-8">
                 
                 <!-- Loading State -->
-                <div id="ai-loading" class="glass-panel rounded-3xl p-10 text-center relative overflow-hidden">
+                <div id="ai-loading" class="glass-panel rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center relative overflow-hidden">
                     <div class="absolute inset-0 bg-indigo-500/5 backdrop-blur-xl"></div>
                     <div class="relative z-10">
                         <div class="inline-block relative mb-4">
-                            <div class="w-16 h-16 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin"></div>
-                            <i class="fa-solid fa-brain absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl text-indigo-400"></i>
+                            <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin"></div>
+                            <i class="fa-solid fa-brain absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg sm:text-xl text-indigo-400"></i>
                         </div>
-                        <h3 class="text-lg font-bold text-white">Đang kích hoạt Gemini AI phân tích chuyên sâu...</h3>
-                        <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">Tự động luân chuyển API keys, bóc tách điểm khen/chê, sinh chiến lược Marketing và câu phản hồi mẫu</p>
+                        <h3 class="text-base sm:text-lg font-bold text-white">Đang kích hoạt Gemini AI phân tích chuyên sâu...</h3>
+                        <p class="text-[11px] sm:text-xs text-slate-400 mt-1 max-w-md mx-auto">Tự động luân chuyển API keys, bóc tách điểm khen/chê, sinh chiến lược Marketing và câu phản hồi mẫu</p>
                     </div>
                 </div>
 
                 <!-- AI 3D Card Output -->
-                <div id="ai-output" class="hidden glass-panel rounded-3xl p-6 sm:p-8 border border-purple-500/30 shadow-[0_0_35px_rgba(147,51,234,0.15)] relative">
+                <div id="ai-output" class="hidden glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-purple-500/30 shadow-[0_0_35px_rgba(147,51,234,0.15)] relative">
                     
                     <!-- Card Header -->
-                    <div class="flex items-center justify-between border-b border-slate-700/60 pb-4 mb-6">
-                        <div class="flex items-center gap-3">
-                            <div class="w-11 h-11 rounded-2xl bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center justify-center text-lg shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+                    <div class="flex items-center justify-between border-b border-slate-700/60 pb-3 sm:pb-4 mb-4 sm:mb-6">
+                        <div class="flex items-center gap-2.5 sm:gap-3">
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center justify-center text-base sm:text-lg shadow-[0_0_15px_rgba(168,85,247,0.3)] shrink-0">
                                 <i class="fa-solid fa-brain"></i>
                             </div>
                             <div>
-                                <h3 class="font-extrabold text-white text-base sm:text-lg">Báo Cáo Phân Tích Chuyên Sâu (Gemini AI)</h3>
-                                <span class="text-xs text-slate-400">Mô hình: <span class="text-purple-300 font-mono">gemini-3.1-flash-lite</span> • <span id="ai-key-used" class="text-indigo-400 font-semibold">Key #1</span></span>
+                                <h3 class="font-extrabold text-white text-sm sm:text-lg">Báo Cáo Phân Tích Chuyên Sâu (Gemini AI)</h3>
+                                <span class="text-[10px] sm:text-xs text-slate-400">Mô hình: <span class="text-purple-300 font-mono">gemini-3.1-flash-lite</span> • <span id="ai-key-used" class="text-indigo-400 font-semibold">Key #1</span></span>
                             </div>
                         </div>
                     </div>
 
                     <!-- 4 3D Sub-panels -->
-                    <div class="space-y-4">
+                    <div class="space-y-3 sm:space-y-4">
                         
                         <!-- 1. Điểm hài lòng -->
-                        <div class="rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-emerald-950/30 to-slate-900/60 border border-emerald-500/20 shadow-lg">
-                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-2 mb-2">
+                        <div class="rounded-xl sm:rounded-2xl p-3.5 sm:p-5 bg-gradient-to-br from-emerald-950/30 to-slate-900/60 border border-emerald-500/20 shadow-lg">
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-2 mb-1.5 sm:mb-2">
                                 <i class="fa-solid fa-thumbs-up"></i>
                                 <span>1. Điểm khách hàng hài lòng / Khen ngợi:</span>
                             </h4>
@@ -476,8 +495,8 @@
                         </div>
 
                         <!-- 2. Điểm chưa hài lòng -->
-                        <div class="rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-rose-950/30 to-slate-900/60 border border-rose-500/20 shadow-lg">
-                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-rose-400 flex items-center gap-2 mb-2">
+                        <div class="rounded-xl sm:rounded-2xl p-3.5 sm:p-5 bg-gradient-to-br from-rose-950/30 to-slate-900/60 border border-rose-500/20 shadow-lg">
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-rose-400 flex items-center gap-2 mb-1.5 sm:mb-2">
                                 <i class="fa-solid fa-thumbs-down"></i>
                                 <span>2. Điểm khách hàng chưa hài lòng / Chê / Thắc mắc:</span>
                             </h4>
@@ -485,8 +504,8 @@
                         </div>
 
                         <!-- 3. Đề xuất Marketing -->
-                        <div class="rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-indigo-950/30 to-slate-900/60 border border-indigo-500/20 shadow-lg">
-                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2 mb-2">
+                        <div class="rounded-xl sm:rounded-2xl p-3.5 sm:p-5 bg-gradient-to-br from-indigo-950/30 to-slate-900/60 border border-indigo-500/20 shadow-lg">
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2 mb-1.5 sm:mb-2">
                                 <i class="fa-solid fa-lightbulb"></i>
                                 <span>3. Đề xuất giải pháp hành động cho Marketing & CSKH:</span>
                             </h4>
@@ -494,18 +513,18 @@
                         </div>
 
                         <!-- 4. Gợi ý câu phản hồi mẫu cho Fanpage -->
-                        <div class="rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-purple-950/40 to-slate-900/80 border border-purple-500/30 shadow-lg relative">
-                            <div class="flex items-center justify-between mb-2">
+                        <div class="rounded-xl sm:rounded-2xl p-3.5 sm:p-5 bg-gradient-to-br from-purple-950/40 to-slate-900/80 border border-purple-500/30 shadow-lg relative">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-2">
                                 <h4 class="text-xs font-extrabold uppercase tracking-wider text-purple-300 flex items-center gap-2">
                                     <i class="fa-solid fa-comment-dots"></i>
                                     <span>4. Gợi ý câu phản hồi chuẩn mực cho Fanpage:</span>
                                 </h4>
                                 <button type="button" onclick="copyReplyText()" 
-                                        class="chip-3d text-xs font-bold px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1.5 shadow-sm">
+                                        class="chip-3d text-xs font-bold px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center gap-1.5 shadow-sm self-start sm:self-auto">
                                     <i class="fa-regular fa-copy"></i> Copy câu trả lời
                                 </button>
                             </div>
-                            <div class="p-3.5 rounded-xl bg-slate-950/60 border border-purple-400/20 text-xs sm:text-sm text-slate-200 italic leading-relaxed" id="ai-reply-box">
+                            <div class="p-3 sm:p-3.5 rounded-xl bg-slate-950/60 border border-purple-400/20 text-xs sm:text-sm text-slate-200 italic leading-relaxed" id="ai-reply-box">
                                 <span id="ai-reply-text"></span>
                             </div>
                         </div>
@@ -514,7 +533,7 @@
                 </div>
 
                 <!-- AI Error Alert -->
-                <div id="ai-error" class="hidden glass-panel border border-rose-500/40 text-rose-300 p-5 rounded-2xl text-xs sm:text-sm mt-4"></div>
+                <div id="ai-error" class="hidden glass-panel border border-rose-500/40 text-rose-300 p-4 sm:p-5 rounded-2xl text-xs sm:text-sm mt-4"></div>
             </div>
 
         </div>
@@ -523,12 +542,12 @@
         <div id="tab-content-bulk" class="hidden">
             
             <!-- Bulk Upload Card -->
-            <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden">
+            <div class="glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-8 mb-6 sm:mb-8 relative overflow-hidden">
                 <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/40 to-transparent"></div>
 
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-6 pb-4 border-b border-slate-800">
                     <div>
-                        <h2 class="text-lg font-black text-white flex items-center gap-2.5">
+                        <h2 class="text-base sm:text-lg font-black text-white flex items-center gap-2">
                             <i class="fa-solid fa-file-excel text-emerald-400"></i>
                             <span>Phân Tích Hàng Loạt Từ Tệp Dữ Liệu</span>
                         </h2>
@@ -538,7 +557,7 @@
                     </div>
 
                     <!-- Single Process Lock Status Badge -->
-                    <div id="lock-status-pill" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800/90 border border-slate-700/80 shadow-md">
+                    <div id="lock-status-pill" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800/90 border border-slate-700/80 shadow-md self-start sm:self-auto">
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" id="lock-indicator-dot"></span>
                         <span id="lock-status-text" class="text-slate-300">Single Process: Sẵn sàng</span>
                     </div>
@@ -548,26 +567,26 @@
                     
                     <!-- 3D Drag & Drop Zone -->
                     <div id="drop-zone" 
-                         class="relative rounded-2xl border-2 border-dashed border-slate-700 hover:border-indigo-500 bg-slate-900/60 p-8 text-center transition-all duration-300 cursor-pointer shadow-inner">
+                         class="relative rounded-2xl border-2 border-dashed border-slate-700 hover:border-indigo-500 bg-slate-900/60 p-5 sm:p-8 text-center transition-all duration-300 cursor-pointer shadow-inner">
                         <input type="file" id="bulk-file-input" name="file" accept=".txt,.xlsx,.xls,.csv" class="hidden" onchange="handleFileSelected(event)">
                         
                         <div id="drop-zone-idle">
-                            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(99,102,241,0.2)]">
+                            <div class="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2.5 sm:mb-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-xl sm:text-2xl shadow-[0_0_20px_rgba(99,102,241,0.2)]">
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
                             </div>
-                            <h3 class="text-base font-bold text-white mb-1">Kéo thả tệp dữ liệu vào đây, hoặc click để chọn</h3>
-                            <p class="text-xs text-slate-400 max-w-sm mx-auto">Hỗ trợ tệp <strong>.TXT</strong> (1 câu/dòng), bảng tính <strong>Excel (.XLSX, .XLS)</strong> hoặc <strong>.CSV</strong> (tối đa 50MB)</p>
+                            <h3 class="text-sm sm:text-base font-bold text-white mb-1">Kéo thả tệp dữ liệu vào đây, hoặc click để chọn</h3>
+                            <p class="text-[11px] sm:text-xs text-slate-400 max-w-sm mx-auto">Hỗ trợ tệp <strong>.TXT</strong> (1 câu/dòng), bảng tính <strong>Excel (.XLSX, .XLS)</strong> hoặc <strong>.CSV</strong> (tối đa 50MB)</p>
                         </div>
 
                         <!-- Selected File Preview -->
                         <div id="drop-zone-selected" class="hidden">
-                            <div class="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-slate-800/90 border border-indigo-500/40 text-white shadow-lg">
-                                <i class="fa-solid fa-file-lines text-indigo-400 text-xl" id="selected-file-icon"></i>
-                                <div class="text-left">
-                                    <div id="selected-filename" class="text-sm font-bold text-slate-100">data_comments.xlsx</div>
-                                    <div id="selected-filesize" class="text-xs text-slate-400 font-mono">15.4 KB</div>
+                            <div class="inline-flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-slate-800/90 border border-indigo-500/40 text-white shadow-lg max-w-full">
+                                <i class="fa-solid fa-file-lines text-indigo-400 text-lg sm:text-xl shrink-0" id="selected-file-icon"></i>
+                                <div class="text-left overflow-hidden">
+                                    <div id="selected-filename" class="text-xs sm:text-sm font-bold text-slate-100 truncate max-w-[180px] sm:max-w-xs">data_comments.xlsx</div>
+                                    <div id="selected-filesize" class="text-[10px] sm:text-xs text-slate-400 font-mono">15.4 KB</div>
                                 </div>
-                                <button type="button" onclick="clearSelectedFile(event)" class="ml-3 text-slate-400 hover:text-rose-400 p-1">
+                                <button type="button" onclick="clearSelectedFile(event)" class="ml-2 sm:ml-3 text-slate-400 hover:text-rose-400 p-1 shrink-0">
                                     <i class="fa-solid fa-xmark text-sm"></i>
                                 </button>
                             </div>
@@ -575,32 +594,32 @@
                     </div>
 
                     <!-- Quick Sample Generator Buttons -->
-                    <div class="mt-4 flex flex-wrap items-center gap-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Mẫu thử nhanh:</span>
-                        <button type="button" onclick="useSampleTxt()" class="chip-3d text-xs font-medium px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 hover:border-indigo-400 flex items-center gap-1.5">
+                    <div class="mt-3.5 sm:mt-4 flex flex-wrap items-center gap-2">
+                        <span class="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Mẫu thử nhanh:</span>
+                        <button type="button" onclick="useSampleTxt()" class="chip-3d text-[11px] sm:text-xs font-medium px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 hover:border-indigo-400 flex items-center gap-1.5">
                             <i class="fa-solid fa-file-lines text-indigo-400"></i> Nạp mẫu 15 câu xe hơi (.TXT)
                         </button>
                     </div>
 
                     <!-- 3D Toggle: Deep Analyst with Gemini -->
-                    <div class="mt-6 p-4 rounded-2xl bg-slate-900/80 border border-purple-500/30 flex items-center justify-between gap-4 shadow-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center justify-center text-base shrink-0">
+                    <div class="mt-5 sm:mt-6 p-3.5 sm:p-4 rounded-2xl bg-slate-900/80 border border-purple-500/30 flex items-start sm:items-center justify-between gap-3 sm:gap-4 shadow-lg">
+                        <div class="flex items-start sm:items-center gap-3">
+                            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center justify-center text-sm sm:text-base shrink-0 mt-0.5 sm:mt-0">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i>
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                <h4 class="text-xs sm:text-sm font-bold text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
                                     <span>Tích hợp Gemini Deep Analyst cho từng bình luận</span>
-                                    <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/40">AI Phản Hồi</span>
+                                    <span class="text-[9px] sm:text-[10px] uppercase font-bold px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/40">AI Phản Hồi</span>
                                 </h4>
-                                <p class="text-xs text-slate-400 mt-0.5">
+                                <p class="text-[11px] sm:text-xs text-slate-400 mt-1 leading-relaxed">
                                     Tự động bóc tách điểm khen/chê, đề xuất chiến lược Marketing và sinh câu trả lời chuẩn mực cho Fanpage vào từng dòng kết quả.
                                 </p>
                             </div>
                         </div>
 
                         <!-- 3D Toggle Switch -->
-                        <label class="switch-container" title="Bật/Tắt phân tích chuyên sâu với Gemini">
+                        <label class="switch-container shrink-0" title="Bật/Tắt phân tích chuyên sâu với Gemini">
                             <input type="checkbox" id="chk-deep-analyst" name="deep_analyst">
                             <span class="switch-slider"></span>
                         </label>
@@ -610,7 +629,7 @@
                     <div class="mt-6 pt-4 border-t border-slate-800 flex justify-end">
                         <button type="submit" 
                                 id="btn-start-bulk"
-                                class="inline-flex items-center gap-2.5 text-white font-bold text-sm sm:text-base px-8 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 shadow-3d-purple active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
+                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 text-white font-bold text-sm sm:text-base px-8 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 shadow-3d-purple active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
                             <i class="fa-solid fa-rocket text-amber-300"></i>
                             <span>Bắt Đầu Phân Tích Hàng Loạt</span>
                         </button>
@@ -619,34 +638,34 @@
             </div>
 
             <!-- LIVE BULK EXECUTION MONITOR CARD -->
-            <div id="bulk-monitor-card" class="hidden glass-panel rounded-3xl p-6 sm:p-8 mb-8 border border-indigo-500/30 shadow-2xl relative overflow-hidden">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
-                    <div class="flex items-center gap-3">
-                        <div id="monitor-icon" class="w-11 h-11 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/40 flex items-center justify-center text-lg shadow-lg animate-pulse">
+            <div id="bulk-monitor-card" class="hidden glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-8 mb-6 sm:mb-8 border border-indigo-500/30 shadow-2xl relative overflow-hidden">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3 sm:pb-4 mb-4 sm:mb-6">
+                    <div class="flex items-center gap-2.5 sm:gap-3">
+                        <div id="monitor-icon" class="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/40 flex items-center justify-center text-base sm:text-lg shadow-lg animate-pulse shrink-0">
                             <i class="fa-solid fa-gears"></i>
                         </div>
                         <div>
-                            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                            <h3 class="text-sm sm:text-lg font-bold text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
                                 <span id="monitor-title">Đang phân tích dữ liệu hàng loạt...</span>
-                                <span id="monitor-tag" class="text-[10px] px-2 py-0.5 rounded-md font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Single Process Active</span>
+                                <span id="monitor-tag" class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Single Process Active</span>
                             </h3>
-                            <span id="monitor-filename" class="text-xs text-slate-400 font-mono">Tệp: comment_data.xlsx</span>
+                            <span id="monitor-filename" class="text-[11px] sm:text-xs text-slate-400 font-mono">Tệp: comment_data.xlsx</span>
                         </div>
                     </div>
 
-                    <div class="text-right">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Thời gian thực thi</span>
+                    <div class="text-right shrink-0">
+                        <span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 tracking-wider">Thời gian</span>
                         <div id="monitor-elapsed" class="text-xs font-mono font-bold text-indigo-300">0.0s</div>
                     </div>
                 </div>
 
                 <!-- 3D Animated Progress Bar -->
-                <div class="space-y-2 mb-6">
+                <div class="space-y-2 mb-5 sm:mb-6">
                     <div class="flex justify-between text-xs font-semibold">
                         <span id="monitor-progress-text" class="text-slate-300">Đang xử lý: 0 / 0 câu</span>
                         <span id="monitor-percentage" class="font-mono text-indigo-400 font-bold">0%</span>
                     </div>
-                    <div class="w-full bg-slate-950 rounded-full h-4 p-[2px] progress-3d overflow-hidden">
+                    <div class="w-full bg-slate-950 rounded-full h-3.5 sm:h-4 p-[2px] progress-3d overflow-hidden">
                         <div id="monitor-progress-bar" 
                              class="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 h-full rounded-full progress-bar-glow transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.6)]" 
                              style="width: 0%"></div>
@@ -654,71 +673,74 @@
                 </div>
 
                 <!-- Current Sentence Snippet Ticker -->
-                <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs flex items-center gap-3">
+                <div class="p-3 sm:p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-[11px] sm:text-xs flex items-center gap-2.5 sm:gap-3">
                     <span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping shrink-0"></span>
                     <span class="text-slate-400 shrink-0 font-medium">Đang xử lý:</span>
                     <span id="monitor-current-text" class="text-slate-200 truncate italic font-mono">Đang khởi tạo các tác vụ...</span>
                 </div>
 
                 <!-- Realtime Counters -->
-                <div class="mt-6 grid grid-cols-3 gap-3">
-                    <div class="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/20 text-center">
-                        <div class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Tích cực (POS)</div>
-                        <div id="stat-pos" class="text-xl sm:text-2xl font-black text-emerald-300 font-mono mt-0.5">0</div>
+                <div class="mt-5 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+                    <div class="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-emerald-950/30 border border-emerald-500/20 text-center">
+                        <div class="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Tích cực (POS)</div>
+                        <div id="stat-pos" class="text-lg sm:text-2xl font-black text-emerald-300 font-mono mt-0.5">0</div>
                     </div>
-                    <div class="p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/20 text-center">
-                        <div class="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Trung tính (NEU)</div>
-                        <div id="stat-neu" class="text-xl sm:text-2xl font-black text-amber-300 font-mono mt-0.5">0</div>
+                    <div class="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-amber-950/30 border border-amber-500/20 text-center">
+                        <div class="text-[9px] sm:text-[10px] uppercase font-bold text-amber-400 tracking-wider">Trung tính (NEU)</div>
+                        <div id="stat-neu" class="text-lg sm:text-2xl font-black text-amber-300 font-mono mt-0.5">0</div>
                     </div>
-                    <div class="p-3.5 rounded-2xl bg-rose-950/30 border border-rose-500/20 text-center">
-                        <div class="text-[10px] uppercase font-bold text-rose-400 tracking-wider">Tiêu cực (NEG)</div>
-                        <div id="stat-neg" class="text-xl sm:text-2xl font-black text-rose-300 font-mono mt-0.5">0</div>
+                    <div class="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-rose-950/30 border border-rose-500/20 text-center">
+                        <div class="text-[9px] sm:text-[10px] uppercase font-bold text-rose-400 tracking-wider">Tiêu cực (NEG)</div>
+                        <div id="stat-neg" class="text-lg sm:text-2xl font-black text-rose-300 font-mono mt-0.5">0</div>
                     </div>
                 </div>
 
                 <!-- Completion & Download Banner -->
-                <div id="bulk-completed-box" class="hidden mt-6 pt-6 border-t border-slate-800">
-                    <div class="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900/80 to-slate-900 border border-emerald-500/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-neon-emerald">
-                        <div class="flex items-center gap-3.5">
-                            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-xl shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                <div id="bulk-completed-box" class="hidden mt-6 pt-5 sm:pt-6 border-t border-slate-800">
+                    <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900/80 to-slate-900 border border-emerald-500/40 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 shadow-neon-emerald">
+                        <div class="flex items-center gap-3 sm:gap-3.5">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-lg sm:text-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] shrink-0">
                                 <i class="fa-solid fa-circle-check"></i>
                             </div>
                             <div>
-                                <h4 class="text-base font-extrabold text-white">Quá trình phân tích hoàn tất xuất sắc!</h4>
-                                <p class="text-xs text-slate-300 mt-0.5">Tệp CSV đã được định dạng chuẩn <span class="text-emerald-400 font-mono">UTF-8-SIG</span> hiển thị chuẩn tiếng Việt trong Excel.</p>
+                                <h4 class="text-sm sm:text-base font-extrabold text-white">Quá trình phân tích hoàn tất xuất sắc!</h4>
+                                <p class="text-[11px] sm:text-xs text-slate-300 mt-0.5">Tệp CSV đã được định dạng chuẩn <span class="text-emerald-400 font-mono">UTF-8-SIG</span> hiển thị chuẩn tiếng Việt trong Excel.</p>
                             </div>
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="flex flex-wrap items-center gap-3 shrink-0">
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto">
                             <button type="button" 
                                     onclick="clearBulkTask()" 
-                                    class="inline-flex items-center justify-center gap-2 text-slate-300 hover:text-white font-bold text-xs sm:text-sm px-4 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 transition shadow-sm">
+                                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-slate-300 hover:text-white font-bold text-xs sm:text-sm px-4 py-3 rounded-xl sm:rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 transition shadow-sm">
                                 <i class="fa-solid fa-folder-plus text-indigo-400"></i>
                                 <span>Phân Tích Tệp Khác</span>
                             </button>
                             <a id="btn-download-csv" 
                                href="#" 
                                download 
-                               class="inline-flex items-center justify-center gap-2.5 text-white font-black text-sm px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 shadow-3d-emerald active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
-                                <i class="fa-solid fa-download text-lg"></i>
+                               class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 text-white font-black text-xs sm:text-sm px-6 py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 shadow-3d-emerald active:translate-y-1 transition-all duration-150 transform hover:-translate-y-0.5">
+                                <i class="fa-solid fa-download text-base sm:text-lg"></i>
                                 <span>Tải File CSV Kết Quả</span>
                             </a>
                         </div>
                     </div>
 
-                    <!-- Live Preview Table of 10 Results -->
-                    <div class="mt-6">
-                        <div class="flex items-center justify-between mb-3">
+                    <!-- Live Preview Table of 10 Results (Touch scrollable) -->
+                    <div class="mt-5 sm:mt-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-0 mb-3">
                             <h5 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                                 <i class="fa-solid fa-table-list text-indigo-400"></i>
                                 <span>Xem trước 10 kết quả đầu tiên:</span>
                             </h5>
-                            <span class="text-[11px] text-slate-500">Dữ liệu chi tiết đã được xuất đầy đủ trong file CSV</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-indigo-300 sm:hidden flex items-center gap-1 font-medium bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-md"><i class="fa-solid fa-arrows-left-right"></i> Vuốt ngang để xem đủ cột</span>
+                                <span class="text-[11px] text-slate-500 hidden sm:inline">Dữ liệu chi tiết đã được xuất đầy đủ trong file CSV</span>
+                            </div>
                         </div>
 
-                        <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/60">
-                            <table class="w-full text-left text-xs text-slate-300">
+                        <div class="overflow-x-auto custom-scroll rounded-2xl border border-slate-800 bg-slate-950/60 -mx-1 sm:mx-0">
+                            <table class="w-full text-left text-xs text-slate-300 min-w-[620px]">
                                 <thead class="bg-slate-900/90 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
                                     <tr>
                                         <th class="py-3 px-3 w-12 text-center">STT</th>
@@ -805,9 +827,9 @@
             if (btnReset) btnReset.classList.remove('hidden');
 
             card.classList.remove('hidden', 'border-emerald-500/30', 'shadow-neon-emerald', 'border-rose-500/30', 'shadow-neon-rose', 'border-amber-500/30', 'shadow-neon-amber');
-            badgeBox.className = 'w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-lg';
-            banner.className = 'p-6 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 border';
-            emojiBox.className = 'w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-2xl border border-white/10';
+            badgeBox.className = 'w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-base sm:text-lg shadow-lg shrink-0';
+            banner.className = 'p-4 sm:p-6 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 border';
+            emojiBox.className = 'w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl shadow-2xl border border-white/10 shrink-0';
 
             if (res.sentiment === 'POS') {
                 card.classList.add('border-emerald-500/30', 'shadow-neon-emerald');
@@ -815,21 +837,21 @@
                 banner.classList.add('bg-gradient-to-br', 'from-emerald-950/60', 'via-emerald-900/20', 'to-slate-900/80', 'border-emerald-500/30');
                 emojiBox.classList.add('bg-emerald-500/20', 'text-emerald-300', 'shadow-[0_0_20px_rgba(16,185,129,0.3)]');
                 emojiIcon.className = 'fa-solid fa-face-laugh-beam';
-                conf.className = 'text-3xl font-black mt-0.5 tracking-tight font-mono text-emerald-400';
+                conf.className = 'text-2xl sm:text-3xl font-black mt-0.5 tracking-tight font-mono text-emerald-400';
             } else if (res.sentiment === 'NEG') {
                 card.classList.add('border-rose-500/30', 'shadow-neon-rose');
                 badgeBox.classList.add('bg-rose-500/20', 'text-rose-400', 'border', 'border-rose-500/40');
                 banner.classList.add('bg-gradient-to-br', 'from-rose-950/60', 'via-rose-900/20', 'to-slate-900/80', 'border-rose-500/30');
                 emojiBox.classList.add('bg-rose-500/20', 'text-rose-300', 'shadow-[0_0_20px_rgba(244,63,94,0.3)]');
                 emojiIcon.className = 'fa-solid fa-face-frown-open';
-                conf.className = 'text-3xl font-black mt-0.5 tracking-tight font-mono text-rose-400';
+                conf.className = 'text-2xl sm:text-3xl font-black mt-0.5 tracking-tight font-mono text-rose-400';
             } else {
                 card.classList.add('border-amber-500/30', 'shadow-neon-amber');
                 badgeBox.classList.add('bg-amber-500/20', 'text-amber-400', 'border', 'border-amber-500/40');
                 banner.classList.add('bg-gradient-to-br', 'from-amber-950/60', 'via-amber-900/20', 'to-slate-900/80', 'border-amber-500/30');
                 emojiBox.classList.add('bg-amber-500/20', 'text-amber-300', 'shadow-[0_0_20px_rgba(245,158,11,0.3)]');
                 emojiIcon.className = 'fa-solid fa-face-meh';
-                conf.className = 'text-3xl font-black mt-0.5 tracking-tight font-mono text-amber-400';
+                conf.className = 'text-2xl sm:text-3xl font-black mt-0.5 tracking-tight font-mono text-amber-400';
             }
 
             label.innerText = res.label || (res.sentiment === 'POS' ? 'TÍCH CỰC' : res.sentiment === 'NEG' ? 'TIÊU CỰC' : 'TRUNG TÍNH');
