@@ -29,6 +29,7 @@ log.txt
 # OS specific files
 .DS_Store
 Thumbs.db
+.idea/
 
 # Heavy Model Checkpoints & Weights (>100MB exceeds GitHub file limit)
 build_AI_model/checkpoints/
