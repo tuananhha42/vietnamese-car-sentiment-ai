@@ -552,7 +552,7 @@
                             <span>Phân Tích Hàng Loạt Từ Tệp Dữ Liệu</span>
                         </h2>
                         <p class="text-xs text-slate-400 mt-1">
-                            Tải lên tệp <span class="text-indigo-300 font-semibold">.TXT</span> (mỗi câu 1 dòng), <span class="text-emerald-300 font-semibold">.XLSX</span> hoặc <span class="text-cyan-300 font-semibold">.CSV</span> để chấm điểm cảm xúc tự động.
+                            Tải lên tệp <span class="text-indigo-300 font-semibold">.TXT</span>, <span class="text-emerald-300 font-semibold">.XLSX</span> hoặc <span class="text-cyan-300 font-semibold">.CSV</span> (mỗi dòng 1 câu bình luận, không cần tiêu đề) để chấm điểm tự động.
                         </p>
                     </div>
 
@@ -575,7 +575,13 @@
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
                             </div>
                             <h3 class="text-sm sm:text-base font-bold text-white mb-1">Kéo thả tệp dữ liệu vào đây, hoặc click để chọn</h3>
-                            <p class="text-[11px] sm:text-xs text-slate-400 max-w-sm mx-auto">Hỗ trợ tệp <strong>.TXT</strong> (1 câu/dòng), bảng tính <strong>Excel (.XLSX, .XLS)</strong> hoặc <strong>.CSV</strong> (tối đa 50MB)</p>
+                            <p class="text-[11px] sm:text-xs text-slate-300 max-w-md mx-auto">
+                                Hỗ trợ tệp <strong class="text-indigo-300">.TXT</strong>, bảng tính <strong class="text-emerald-300">Excel (.XLSX, .XLS)</strong> hoặc <strong class="text-cyan-300">.CSV</strong> (tối đa 50MB)
+                            </p>
+                            <div class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] sm:text-xs font-medium">
+                                <i class="fa-solid fa-circle-check text-amber-400"></i>
+                                <span>Quy cách: Mỗi dòng 1 câu bình luận, không cần dòng tiêu đề (Header)</span>
+                            </div>
                         </div>
 
                         <!-- Selected File Preview -->
@@ -593,12 +599,55 @@
                         </div>
                     </div>
 
-                    <!-- Quick Sample Generator Buttons -->
-                    <div class="mt-3.5 sm:mt-4 flex flex-wrap items-center gap-2">
-                        <span class="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Mẫu thử nhanh:</span>
-                        <button type="button" onclick="useSampleTxt()" class="chip-3d text-[11px] sm:text-xs font-medium px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 hover:border-indigo-400 flex items-center gap-1.5">
-                            <i class="fa-solid fa-file-lines text-indigo-400"></i> Nạp mẫu 15 câu xe hơi (.TXT)
-                        </button>
+                    <!-- Format Specification Guide & Sample Downloads Section -->
+                    <div class="mt-4 p-3.5 sm:p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 shadow-md">
+                        <div class="flex items-start gap-3 pb-3 border-b border-slate-800/80">
+                            <div class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-sm shrink-0 mt-0.5">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-slate-200 text-xs sm:text-sm flex items-center gap-2">
+                                    <span>Quy cách định dạng tệp chuẩn để tải lên:</span>
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Chuẩn Format</span>
+                                </h4>
+                                <ul class="mt-2 space-y-1.5 text-[11px] sm:text-xs text-slate-400 leading-relaxed">
+                                    <li class="flex items-start gap-1.5">
+                                        <i class="fa-solid fa-check text-emerald-400 mt-1 shrink-0 text-[10px]"></i>
+                                        <span><strong>Mỗi dòng 1 câu bình luận</strong>: Viết liền mạch trên cùng 1 dòng, không xuống dòng giữa câu.</span>
+                                    </li>
+                                    <li class="flex items-start gap-1.5">
+                                        <i class="fa-solid fa-check text-emerald-400 mt-1 shrink-0 text-[10px]"></i>
+                                        <span><strong>Không cần tiêu đề cột (No Header)</strong>: Câu bình luận đầu tiên có thể bắt đầu ngay từ dòng đầu tiên (hoặc ô A1 trong bảng tính).</span>
+                                    </li>
+                                    <li class="flex items-start gap-1.5">
+                                        <i class="fa-solid fa-check text-emerald-400 mt-1 shrink-0 text-[10px]"></i>
+                                        <span>Với <strong>Excel (.xlsx, .xls)</strong> hoặc <strong>.CSV</strong>: Chỉ cần đặt nội dung ở <strong>Cột A (cột đầu tiên)</strong>, lưu mã hóa tiếng Việt <strong>UTF-8</strong>.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Sample Download & Quick Test Buttons -->
+                        <div class="mt-3.5 flex flex-wrap items-center justify-between gap-3 pt-0.5">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fa-solid fa-cloud-arrow-down text-indigo-400"></i> Tải file mẫu về máy:
+                                </span>
+                                <a href="/bulk/sample/txt" download="sample_car_comments.txt" class="chip-3d text-[11px] sm:text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 text-indigo-300 border border-indigo-500/30 hover:border-indigo-400 hover:bg-slate-700/80 flex items-center gap-1.5 transition-all shadow-sm group" title="Tải tệp văn bản mẫu chuẩn UTF-8">
+                                    <i class="fa-solid fa-file-lines text-indigo-400 group-hover:scale-110 transition-transform"></i> Mẫu .TXT
+                                </a>
+                                <a href="/bulk/sample/csv" download="sample_car_comments.csv" class="chip-3d text-[11px] sm:text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-slate-700/80 flex items-center gap-1.5 transition-all shadow-sm group" title="Tải tệp bảng tính CSV mẫu chuẩn UTF-8">
+                                    <i class="fa-solid fa-file-csv text-cyan-400 group-hover:scale-110 transition-transform"></i> Mẫu .CSV
+                                </a>
+                                <a href="/bulk/sample/xlsx" download="sample_car_comments.xlsx" class="chip-3d text-[11px] sm:text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 text-emerald-300 border border-emerald-500/30 hover:border-emerald-400 hover:bg-slate-700/80 flex items-center gap-1.5 transition-all shadow-sm group" title="Tải tệp bảng tính Microsoft Excel mẫu">
+                                    <i class="fa-solid fa-file-excel text-emerald-400 group-hover:scale-110 transition-transform"></i> Mẫu .XLSX
+                                </a>
+                            </div>
+
+                            <button type="button" onclick="useSampleTxt()" class="chip-3d text-[11px] sm:text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-indigo-950/70 text-amber-300 border border-amber-500/40 hover:border-amber-400 hover:bg-indigo-900/80 flex items-center gap-1.5 transition-all shadow-sm" title="Nạp trực tiếp 15 câu bình luận mẫu vào form mà không cần tải file">
+                                <i class="fa-solid fa-bolt text-amber-400"></i> Nạp nhanh 15 câu xe hơi
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 3D Toggle: Deep Analyst with Gemini -->

@@ -53,12 +53,14 @@ Sau đó mở trình duyệt tại: **`http://localhost:5000`**
 ## 3. Hướng dẫn sử dụng tính năng Phân Tích Hàng Loạt (Bulk Analyst)
 
 1. Mở trình duyệt tại `http://localhost:5000` và chuyển sang tab **`⚡ Phân Tích Hàng Loạt (Bulk Analyst)`**.
-2. **Chuẩn bị file dữ liệu:**
-   - Hỗ trợ định dạng `.txt` (mỗi câu 1 dòng riêng biệt).
-   - Hỗ trợ bảng tính Excel `.xlsx`, `.xls` (chứa cột `comment`, `binh_luan`, `noi_dung`...).
-   - Hỗ trợ file `.csv`.
-   - *Mẹo:* Bạn có thể bấm nút **"📁 Nạp mẫu 15 câu xe hơi (.TXT)"** trên giao diện để thử nghiệm nhanh không cần chuẩn bị file.
-   - Hoặc sử dụng file mẫu có sẵn tại: `demo_flask/sample_car_comments.xlsx` / `demo_flask/sample_car_comments.txt`.
+2. **Chuẩn bị file dữ liệu & Quy cách định dạng:**
+   - **Quy cách chuẩn:** Mỗi dòng là **1 câu bình luận duy nhất**, **không cần dòng tiêu đề (Header)**.
+   - Hỗ trợ định dạng `.txt` (UTF-8).
+   - Hỗ trợ bảng tính Excel `.xlsx`, `.xls` (dữ liệu đặt tại Cột A hoặc có cột bình luận).
+   - Hỗ trợ file `.csv` (mỗi dòng 1 câu, UTF-8).
+   - *Tải file mẫu trực tiếp:* Ngay trên giao diện có nút tải về máy tính các tệp mẫu chuẩn: **Mẫu .TXT**, **Mẫu .CSV**, **Mẫu .XLSX**.
+   - *Thử nghiệm nhanh:* Bấm nút **"⚡ Nạp nhanh 15 câu xe hơi"** để đưa trực tiếp dữ liệu mẫu vào phân tích ngay mà không cần tải file lên.
+   - Các file mẫu lưu sẵn trong mã nguồn: `sample_car_comments.txt`, `sample_car_comments.csv`, `sample_car_comments.xlsx`.
 3. **Tùy chọn Gemini Deep Analyst:**
    - Bật công tắc **"Tích hợp Gemini Deep Analyst cho từng bình luận"** nếu muốn bổ sung các cột nhận xét chuyên sâu, đề xuất Marketing và câu phản hồi Fanpage vào file kết quả.
 4. **Bắt đầu phân tích:**

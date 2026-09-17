@@ -282,6 +282,34 @@ def bulk_download(task_id):
         mimetype="text/csv"
     )
 
+@app.route("/bulk/sample/<file_type>", methods=["GET"])
+def download_sample_file(file_type):
+    """
+    Tải file dữ liệu mẫu cho khách hàng tham khảo format chuẩn (.txt, .csv, .xlsx).
+    Quy chuẩn: mỗi dòng 1 câu bình luận, không cần header.
+    """
+    ft = file_type.lower().strip()
+    mapping = {
+        "txt": ("sample_car_comments.txt", "text/plain; charset=utf-8"),
+        "csv": ("sample_car_comments.csv", "text/csv; charset=utf-8"),
+        "xlsx": ("sample_car_comments.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+        "xls": ("sample_car_comments.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    }
+    if ft not in mapping:
+        return jsonify({"error": f"Định dạng mẫu '{file_type}' không được hỗ trợ. Vui lòng chọn txt, csv hoặc xlsx."}), 404
+
+    filename, mimetype = mapping[ft]
+    file_path = os.path.join(CURRENT_DIR, filename)
+    if not os.path.exists(file_path):
+        return jsonify({"error": f"Không tìm thấy file mẫu {filename}."}), 404
+
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=filename,
+        mimetype=mimetype
+    )
+
 @app.route("/bulk/clear", methods=["POST"])
 def bulk_clear():
     """Xóa trạng thái tác vụ phân tích hàng loạt đã hoàn tất để chuẩn bị tải file mới"""

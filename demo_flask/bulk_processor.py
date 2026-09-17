@@ -13,7 +13,8 @@ os.makedirs(BULK_OUTPUT_DIR, exist_ok=True)
 # Các tên cột thông dụng có thể chứa văn bản bình luận trong file CSV/Excel
 TEXT_COLUMN_CANDIDATES = [
     "comment", "comments", "binh_luan", "binhluan", "noi_dung", "noidung",
-    "text", "content", "cau", "cau_noi", "review", "reviews", "feedback", "message"
+    "text", "content", "cau", "cau_noi", "review", "reviews", "feedback", "message",
+    "bình luận", "nội dung", "câu", "đánh giá", "ý kiến", "nhận xét", "câu bình luận"
 ]
 
 class BulkProcessManager:
@@ -37,8 +38,8 @@ class BulkProcessManager:
         """
         Phân tích cú pháp file người dùng tải lên:
         - .txt: Mỗi dòng là 1 câu
-        - .csv: Đọc bằng pandas, tự động phát hiện cột chứa văn bản
-        - .xlsx / .xls: Đọc bảng tính Excel, tự động phát hiện cột chứa văn bản
+        - .csv: Đọc bằng pandas (hỗ trợ cả có header lẫn không có header)
+        - .xlsx / .xls: Đọc bảng tính Excel (hỗ trợ cả có header lẫn không có header)
         Trả về: (danh sách các câu văn bản hợp lệ, tên file gốc)
         """
         filename = file_storage.filename or "unknown_file.txt"
@@ -70,7 +71,7 @@ class BulkProcessManager:
 
         elif ext in [".xlsx", ".xls"]:
             try:
-                df = pd.read_excel(io.BytesIO(file_bytes))
+                df = pd.read_excel(io.BytesIO(file_bytes), header=None)
             except Exception as e:
                 raise ValueError(f"Không thể đọc file Excel: {str(e)}")
             comments = self._extract_text_from_df(df)
@@ -79,13 +80,29 @@ class BulkProcessManager:
             df = None
             for enc in ["utf-8-sig", "utf-8", "cp1258", "latin-1"]:
                 try:
-                    df = pd.read_csv(io.BytesIO(file_bytes), encoding=enc)
+                    df = pd.read_csv(io.BytesIO(file_bytes), encoding=enc, header=None)
                     break
                 except Exception:
                     continue
-            if df is None:
-                raise ValueError("Không thể đọc file CSV. Vui lòng lưu file ở định dạng UTF-8.")
-            comments = self._extract_text_from_df(df)
+
+            if df is not None:
+                comments = self._extract_text_from_df(df)
+            else:
+                # Fallback nếu file CSV có cấu trúc dòng không đều (ví dụ mỗi dòng 1 câu nhưng chứa dấu phẩy chưa đóng ngoặc kép)
+                decoded_text = None
+                for enc in ["utf-8-sig", "utf-8", "cp1258", "latin-1"]:
+                    try:
+                        decoded_text = file_bytes.decode(enc)
+                        break
+                    except UnicodeDecodeError:
+                        continue
+                if decoded_text is not None:
+                    raw_lines = [line.strip().strip('"\'') for line in decoded_text.splitlines() if line.strip()]
+                    if raw_lines and raw_lines[0].lower() in TEXT_COLUMN_CANDIDATES:
+                        raw_lines = raw_lines[1:]
+                    comments = raw_lines
+                else:
+                    raise ValueError("Không thể đọc file CSV. Vui lòng lưu file ở định dạng UTF-8.")
 
         else:
             raise ValueError(f"Định dạng file '{ext}' không được hỗ trợ. Vui lòng chỉ tải lên file .txt, .xlsx, .xls hoặc .csv.")
@@ -96,31 +113,42 @@ class BulkProcessManager:
         return comments, filename
 
     def _extract_text_from_df(self, df: pd.DataFrame) -> List[str]:
-        """Tự động tìm cột văn bản trong DataFrame"""
+        """
+        Tự động tìm cột văn bản và trích xuất dữ liệu:
+        - Hỗ trợ file không có header (mỗi dòng 1 câu bình luận ngay từ dòng đầu tiên).
+        - Hỗ trợ file có header thông dụng (comment, binh_luan, text, content...).
+        - Tự động chọn cột văn bản nếu file có nhiều cột.
+        """
         if df.empty:
             return []
 
-        # 1. Tìm cột theo tên candidates
-        matched_col = None
-        lower_cols = {str(c).strip().lower(): c for c in df.columns}
-        for cand in TEXT_COLUMN_CANDIDATES:
-            if cand in lower_cols:
-                matched_col = lower_cols[cand]
+        # 1. Kiểm tra dòng đầu tiên xem có phải là dòng tiêu đề (Header) hay không
+        first_row_vals = [str(x).strip().lower() for x in df.iloc[0].values]
+        header_col_idx = None
+        for idx, val in enumerate(first_row_vals):
+            if val in TEXT_COLUMN_CANDIDATES:
+                header_col_idx = idx
                 break
 
-        # 2. Nếu không có tên khớp, lấy cột dạng string/object đầu tiên
-        if matched_col is None:
-            for col in df.columns:
-                if df[col].dtype == object or pd.api.types.is_string_dtype(df[col]):
-                    matched_col = col
-                    break
+        if header_col_idx is not None:
+            # File có dòng tiêu đề -> bỏ qua dòng 0, lấy từ dòng 1
+            series = df.iloc[1:, header_col_idx]
+        else:
+            # File KHÔNG có dòng tiêu đề (đúng chuẩn: mỗi dòng 1 câu bình luận)
+            # Tự động chọn cột chứa nội dung văn bản dài nhất
+            best_col = 0
+            max_avg_len = -1.0
+            for col_idx in range(df.shape[1]):
+                col_series = df.iloc[:, col_idx].dropna().astype(str)
+                non_empty = [s for s in col_series if s.strip() and s.strip().lower() != "nan"]
+                if non_empty:
+                    avg_len = sum(len(s) for s in non_empty) / len(non_empty)
+                    if avg_len > max_avg_len:
+                        max_avg_len = avg_len
+                        best_col = col_idx
+            series = df.iloc[:, best_col]
 
-        # 3. Nếu vẫn không có, lấy cột đầu tiên
-        if matched_col is None:
-            matched_col = df.columns[0]
-
-        series = df[matched_col].dropna().astype(str)
-        extracted = [s.strip() for s in series if s.strip() and s.strip().lower() != "nan"]
+        extracted = [str(s).strip() for s in series.dropna() if str(s).strip() and str(s).strip().lower() != "nan"]
         return extracted
 
     def start_task(
