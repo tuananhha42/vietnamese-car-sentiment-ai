@@ -19,20 +19,31 @@ TEXT_COLUMN_CANDIDATES = [
 
 class BulkProcessManager:
     """
-    Quản lý tiến trình phân tích hàng loạt (Single Concurrent Process).
-    Đảm bảo tại một thời điểm chỉ có DUY NHẤT 1 tiến trình được phép chạy.
-    Hỗ trợ đọc file TXT, Excel (.xlsx, .xls), CSV và xuất kết quả ra file CSV chuẩn UTF-8-SIG.
+    Quản lý tiến trình phân tích hàng loạt đa luồng độc lập theo Session (Multi-Session Concurrent Processing).
+    Mỗi phiên truy cập (Session) của người dùng được phân bổ một worker thread riêng biệt,
+    đảm bảo phân tách hoàn toàn kết quả, tiến trình và dữ liệu giữa các máy truy cập khác nhau.
     """
     def __init__(self):
         self._lock = threading.Lock()
-        self._is_running = False
-        self._current_task: Optional[Dict[str, Any]] = None
-        self._results_cache: Dict[str, Dict[str, Any]] = {}
+        self._tasks: Dict[str, Dict[str, Any]] = {}
+        self._session_active_task: Dict[str, str] = {}
+        self._worker_threads: Dict[str, threading.Thread] = {}
+
+    def is_session_running(self, session_id: Optional[str]) -> bool:
+        """Kiểm tra xem session cụ thể có đang chạy tác vụ nào không"""
+        if not session_id:
+            return False
+        with self._lock:
+            task_id = self._session_active_task.get(session_id)
+            if task_id and task_id in self._tasks:
+                return self._tasks[task_id].get("status") == "running"
+            return False
 
     @property
     def is_running(self) -> bool:
+        """Trả về True nếu có bất kỳ worker thread nào đang chạy trên server"""
         with self._lock:
-            return self._is_running
+            return any(t.is_alive() for t in self._worker_threads.values())
 
     def parse_uploaded_file(self, file_storage) -> Tuple[List[str], str]:
         """
@@ -153,6 +164,7 @@ class BulkProcessManager:
 
     def start_task(
         self,
+        session_id: str,
         comments: List[str],
         filename: str,
         deep_analyst: bool,
@@ -161,19 +173,20 @@ class BulkProcessManager:
         api_caller=None
     ) -> Tuple[bool, str, Optional[str]]:
         """
-        Bắt đầu một tiến trình Bulk Analysis.
-        Kiểm tra trạng thái Single Process Lock: nếu có tiến trình đang chạy -> từ chối ngay.
+        Bắt đầu một tiến trình Bulk Analysis độc lập cho session_id cụ thể.
+        Mỗi session chạy trên một worker thread riêng biệt.
         """
         with self._lock:
-            if self._is_running:
-                cur = self._current_task or {}
+            prev_tid = self._session_active_task.get(session_id)
+            if prev_tid and prev_tid in self._tasks and self._tasks[prev_tid].get("status") == "running":
+                cur = self._tasks[prev_tid]
                 cur_prog = f"{cur.get('current', 0)}/{cur.get('total', 0)}"
-                return False, f"Hệ thống đang thực hiện một tiến trình phân tích khác ({cur_prog} câu). Vui lòng đợi tiến trình hiện tại hoàn tất!", None
+                return False, f"Phiên làm việc của bạn đang có 1 tiến trình phân tích đang chạy ({cur_prog} câu). Vui lòng đợi tiến trình hiện tại hoàn tất!", None
 
             task_id = str(uuid.uuid4())[:8]
-            self._is_running = True
-            self._current_task = {
+            task_info = {
                 "task_id": task_id,
+                "session_id": session_id,
                 "filename": filename,
                 "total": len(comments),
                 "current": 0,
@@ -189,12 +202,17 @@ class BulkProcessManager:
                 "csv_download_url": None,
                 "error": None
             }
+            self._tasks[task_id] = task_info
+            self._session_active_task[session_id] = task_id
 
         worker_thread = threading.Thread(
             target=self._run_worker,
-            args=(task_id, comments, filename, deep_analyst, classifier_getter, suggester_getter, api_caller),
+            args=(task_id, session_id, comments, filename, deep_analyst, classifier_getter, suggester_getter, api_caller),
+            name=f"BulkWorker-{task_id}",
             daemon=True
         )
+        with self._lock:
+            self._worker_threads[task_id] = worker_thread
         worker_thread.start()
 
         return True, "Tiến trình phân tích hàng loạt đã được khởi động thành công.", task_id
@@ -202,6 +220,7 @@ class BulkProcessManager:
     def _run_worker(
         self,
         task_id: str,
+        session_id: str,
         comments: List[str],
         filename: str,
         deep_analyst: bool,
@@ -209,7 +228,7 @@ class BulkProcessManager:
         suggester_getter,
         api_caller
     ):
-        """Worker chạy ngầm cho 1 tiến trình phân tích duy nhất"""
+        """Worker chạy ngầm cho 1 tiến trình phân tích của session cụ thể"""
         total = len(comments)
         started_at = time.time()
         results: List[Dict[str, Any]] = []
@@ -229,7 +248,7 @@ class BulkProcessManager:
                         sentiment_results.extend(res_batch)
                     used_api = True
                 except Exception as e:
-                    print(f"[BulkWorker] API batch thất bại, chuyển sang local classifier: {e}")
+                    print(f"[BulkWorker-{task_id}] API batch thất bại, chuyển sang local classifier: {e}")
                     sentiment_results = []
 
             if not used_api or not sentiment_results:
@@ -261,11 +280,11 @@ class BulkProcessManager:
                 if deep_analyst and suggester is not None:
                     # Cập nhật trạng thái câu đang phân tích
                     with self._lock:
-                        if self._current_task and self._current_task["task_id"] == task_id:
-                            self._current_task["current"] = idx + 1
-                            self._current_task["progress_pct"] = int(((idx + 1) / total) * 100)
-                            self._current_task["elapsed_seconds"] = round(time.time() - started_at, 1)
-                            self._current_task["current_text"] = (text[:70] + "...") if len(text) > 70 else text
+                        if task_id in self._tasks:
+                            self._tasks[task_id]["current"] = idx + 1
+                            self._tasks[task_id]["progress_pct"] = int(((idx + 1) / total) * 100)
+                            self._tasks[task_id]["elapsed_seconds"] = round(time.time() - started_at, 1)
+                            self._tasks[task_id]["current_text"] = (text[:70] + "...") if len(text) > 70 else text
 
                     try:
                         clean_input = item.get("cleaned_text") or text
@@ -283,11 +302,11 @@ class BulkProcessManager:
                     # Nếu không dùng Gemini, cập nhật tiến độ theo từng nhóm
                     if (idx + 1) % 10 == 0 or (idx + 1) == total:
                         with self._lock:
-                            if self._current_task and self._current_task["task_id"] == task_id:
-                                self._current_task["current"] = idx + 1
-                                self._current_task["progress_pct"] = int(((idx + 1) / total) * 100)
-                                self._current_task["elapsed_seconds"] = round(time.time() - started_at, 1)
-                                self._current_task["current_text"] = (text[:70] + "...") if len(text) > 70 else text
+                            if task_id in self._tasks:
+                                self._tasks[task_id]["current"] = idx + 1
+                                self._tasks[task_id]["progress_pct"] = int(((idx + 1) / total) * 100)
+                                self._tasks[task_id]["elapsed_seconds"] = round(time.time() - started_at, 1)
+                                self._tasks[task_id]["current_text"] = (text[:70] + "...") if len(text) > 70 else text
 
                 # Đóng gói dữ liệu từng dòng
                 row_record = {
@@ -306,10 +325,10 @@ class BulkProcessManager:
 
                 # Giữ 10 kết quả gần nhất cho bảng xem trước trực tiếp trên giao diện
                 with self._lock:
-                    if self._current_task and self._current_task["task_id"] == task_id:
-                        self._current_task["summary"] = summary
-                        if len(self._current_task["preview"]) < 10:
-                            self._current_task["preview"].append({
+                    if task_id in self._tasks:
+                        self._tasks[task_id]["summary"] = summary
+                        if len(self._tasks[task_id]["preview"]) < 10:
+                            self._tasks[task_id]["preview"].append({
                                 "stt": idx + 1,
                                 "text": text,
                                 "label": label,
@@ -338,7 +357,6 @@ class BulkProcessManager:
                     csv_item["Gemini - Điểm chưa hài lòng / Thắc mắc"] = "\n- ".join(g.get("chua_hai_long", [])) if g.get("chua_hai_long") else ""
                     csv_item["Gemini - Đề xuất Marketing & CSKH"] = "\n- ".join(g.get("de_xuat_marketing", [])) if g.get("de_xuat_marketing") else ""
                     csv_item["Gemini - Gợi ý câu phản hồi Fanpage"] = g.get("cau_phan_hoi_mau", "")
-                    csv_item["Gemini Key sử dụng"] = g.get("key_used", "")
 
                 csv_rows.append(csv_item)
 
@@ -354,32 +372,32 @@ class BulkProcessManager:
 
             total_elapsed = round(time.time() - started_at, 2)
             with self._lock:
-                if self._current_task and self._current_task["task_id"] == task_id:
-                    self._current_task["status"] = "completed"
-                    self._current_task["progress_pct"] = 100
-                    self._current_task["current"] = total
-                    self._current_task["elapsed_seconds"] = total_elapsed
-                    self._current_task["csv_filename"] = csv_filename
-                    self._current_task["csv_download_url"] = f"/bulk/download/{task_id}"
-                    self._current_task["current_text"] = "Phân tích hoàn tất! Bạn có thể tải file kết quả."
-                    self._results_cache[task_id] = dict(self._current_task)
+                if task_id in self._tasks:
+                    self._tasks[task_id]["status"] = "completed"
+                    self._tasks[task_id]["progress_pct"] = 100
+                    self._tasks[task_id]["current"] = total
+                    self._tasks[task_id]["elapsed_seconds"] = total_elapsed
+                    self._tasks[task_id]["csv_filename"] = csv_filename
+                    self._tasks[task_id]["csv_download_url"] = f"/bulk/download/{task_id}"
+                    self._tasks[task_id]["current_text"] = "Phân tích hoàn tất! Bạn có thể tải file kết quả."
 
         except Exception as err:
             import traceback
             traceback.print_exc()
             with self._lock:
-                if self._current_task and self._current_task["task_id"] == task_id:
-                    self._current_task["status"] = "error"
-                    self._current_task["error"] = str(err)
-                    self._current_task["current_text"] = f"Lỗi: {str(err)}"
-                    self._results_cache[task_id] = dict(self._current_task)
+                if task_id in self._tasks:
+                    self._tasks[task_id]["status"] = "error"
+                    self._tasks[task_id]["error"] = str(err)
+                    self._tasks[task_id]["current_text"] = f"Lỗi: {str(err)}"
 
         finally:
             with self._lock:
-                self._is_running = False
+                self._worker_threads.pop(task_id, None)
 
-    def _get_latest_completed_from_disk(self, target_task_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
-        """Tự động khôi phục metadata của tác vụ hoàn tất từ file CSV trên đĩa"""
+    def _get_task_from_disk(self, target_task_id: str) -> Optional[Dict[str, Any]]:
+        """Tự động khôi phục metadata của tác vụ hoàn tất từ file CSV trên đĩa NẾU có target_task_id cụ thể"""
+        if not target_task_id or not target_task_id.strip():
+            return None
         try:
             if not os.path.exists(BULK_OUTPUT_DIR):
                 return None
@@ -387,28 +405,17 @@ class BulkProcessManager:
                 f for f in os.listdir(BULK_OUTPUT_DIR)
                 if f.startswith("sentiment_report_") and f.endswith(".csv")
             ]
-            if not csv_files:
-                return None
-            csv_files.sort(key=lambda f: os.path.getmtime(os.path.join(BULK_OUTPUT_DIR, f)), reverse=True)
-            
             matched_file = None
-            if target_task_id:
-                for f in csv_files:
-                    if target_task_id in f:
-                        matched_file = f
-                        break
-            else:
-                matched_file = csv_files[0]
+            clean_tid = target_task_id.strip()
+            for f in csv_files:
+                if clean_tid in f:
+                    matched_file = f
+                    break
 
             if not matched_file:
                 return None
 
-            latest_csv = matched_file
-            # Phân tách task_id từ tên file (sentiment_report_{clean_fname}_{mode}_{timestamp}_{task_id}.csv)
-            parts = os.path.splitext(latest_csv)[0].split("_")
-            task_id = parts[-1] if len(parts) > 1 else (target_task_id or "saved")
-            
-            csv_path = os.path.join(BULK_OUTPUT_DIR, latest_csv)
+            csv_path = os.path.join(BULK_OUTPUT_DIR, matched_file)
             df = pd.read_csv(csv_path, encoding="utf-8-sig")
             total = len(df)
             pos_count = int((df["Mã cảm xúc"] == "POS").sum()) if "Mã cảm xúc" in df else 0
@@ -427,61 +434,79 @@ class BulkProcessManager:
                 })
 
             task_info = {
-                "task_id": task_id,
-                "filename": latest_csv,
+                "task_id": clean_tid,
+                "filename": matched_file,
                 "total": total,
                 "current": total,
                 "progress_pct": 100,
                 "status": "completed",
-                "deep_analyst": "with_gemini" in latest_csv,
+                "deep_analyst": "with_gemini" in matched_file,
                 "started_at": os.path.getmtime(csv_path),
                 "elapsed_seconds": 0.0,
                 "current_text": "Phân tích hoàn tất! Bạn có thể tải file kết quả.",
                 "summary": {"POS": pos_count, "NEU": neu_count, "NEG": neg_count},
                 "preview": preview,
-                "csv_filename": latest_csv,
-                "csv_download_url": f"/bulk/download/{task_id}",
+                "csv_filename": matched_file,
+                "csv_download_url": f"/bulk/download/{clean_tid}",
                 "error": None
             }
-            self._results_cache[task_id] = task_info
+            self._tasks[clean_tid] = task_info
             return task_info
         except Exception as e:
             print(f"[BulkManager] Lỗi đọc tác vụ từ đĩa: {e}")
             return None
 
-    def clear_task(self):
-        """Xóa trạng thái tác vụ hiện tại để người dùng bắt đầu tác vụ mới"""
+    def clear_task(self, session_id: Optional[str] = None):
+        """Xóa trạng thái tác vụ của session này để người dùng bắt đầu tác vụ mới"""
         with self._lock:
-            if not self._is_running:
-                self._current_task = None
+            if not session_id:
+                return
+            if session_id in self._session_active_task:
+                tid = self._session_active_task[session_id]
+                if tid in self._tasks and self._tasks[tid].get("status") == "running":
+                    return  # Không xóa khi đang chạy
+                del self._session_active_task[session_id]
 
-    def get_task_status(self, task_id: Optional[str] = None) -> Dict[str, Any]:
-        """Lấy trạng thái hiện tại hoặc theo task_id, có khả năng phục hồi tác vụ từ bộ nhớ hoặc đĩa"""
+    def get_task_status(self, session_id: Optional[str] = None, task_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Lấy trạng thái tác vụ cho session và task_id cụ thể.
+        Tuyệt đối không trả về tác vụ của session khác nếu session hiện tại chưa có tác vụ.
+        """
         with self._lock:
-            # 1. Tìm theo task_id truyền vào từ client (ví dụ phục hồi từ localStorage khi F5)
-            if task_id:
-                if task_id in self._results_cache:
-                    info = dict(self._results_cache[task_id])
-                    info["is_running"] = self._is_running
+            # 1. Nếu client truyền task_id cụ thể (ví dụ từ localStorage khi F5)
+            if task_id and task_id.strip():
+                clean_tid = task_id.strip()
+                if clean_tid in self._tasks:
+                    task = self._tasks[clean_tid]
+                    # Nếu task có session_id và session_id truyền vào không khớp -> không cho thấy task của người khác
+                    if session_id and task.get("session_id") and task.get("session_id") != session_id:
+                        return {
+                            "status": "idle",
+                            "is_running": False,
+                            "progress_pct": 0,
+                            "total": 0,
+                            "current": 0,
+                            "current_text": "Hệ thống sẵn sàng tiếp nhận file."
+                        }
+                    info = dict(task)
+                    info["is_running"] = (info.get("status") == "running")
                     return info
-                # Thử tìm trên đĩa theo task_id
-                disk_task = self._get_latest_completed_from_disk(target_task_id=task_id)
+                
+                # Thử tìm trên đĩa theo clean_tid
+                disk_task = self._get_task_from_disk(clean_tid)
                 if disk_task:
-                    disk_task["is_running"] = self._is_running
+                    disk_task["is_running"] = False
                     return disk_task
 
-            # 2. Nếu có tác vụ hiện tại đang chạy trong phiên này
-            if self._is_running and self._current_task:
-                info = dict(self._current_task)
-                info["is_running"] = self._is_running
-                return info
+            # 2. Nếu không có task_id, chỉ tìm tác vụ thuộc về session_id này
+            if session_id and session_id in self._session_active_task:
+                sess_tid = self._session_active_task[session_id]
+                if sess_tid in self._tasks:
+                    info = dict(self._tasks[sess_tid])
+                    info["is_running"] = (info.get("status") == "running")
+                    return info
 
-            # 3. Nếu tác vụ vừa xong và chưa bị clear
-            if self._current_task:
-                info = dict(self._current_task)
-                info["is_running"] = self._is_running
-                return info
-
+            # 3. Session này chưa có tác vụ nào -> Trả về IDLE (sẵn sàng nhận file)
             return {
                 "status": "idle",
                 "is_running": False,
@@ -491,27 +516,26 @@ class BulkProcessManager:
                 "current_text": "Hệ thống sẵn sàng tiếp nhận file."
             }
 
-    def get_csv_path(self, task_id: str) -> Optional[str]:
-        """Tìm đường dẫn file CSV theo task_id hoặc quét file trên đĩa"""
+    def get_csv_path(self, task_id: str, session_id: Optional[str] = None) -> Optional[str]:
+        """Tìm đường dẫn file CSV theo task_id, bảo vệ quyền riêng tư theo session"""
+        if not task_id or not task_id.strip():
+            return None
+        target_id = task_id.strip()
         with self._lock:
-            # 1. Tìm qua cache
-            task = self._results_cache.get(task_id) or self._current_task
-            if task and task.get("csv_filename"):
-                path = os.path.join(BULK_OUTPUT_DIR, task["csv_filename"])
-                if os.path.exists(path):
-                    return path
+            task = self._tasks.get(target_id)
+            if task:
+                if session_id and task.get("session_id") and task.get("session_id") != session_id:
+                    return None
+                if task.get("csv_filename"):
+                    path = os.path.join(BULK_OUTPUT_DIR, task["csv_filename"])
+                    if os.path.exists(path):
+                        return path
 
-            # 2. Quét tìm trực tiếp theo task_id trong thư mục lưu trữ
+            # Quét file trên đĩa có chứa target_id cụ thể
             if os.path.exists(BULK_OUTPUT_DIR):
                 for f in os.listdir(BULK_OUTPUT_DIR):
-                    if task_id in f and f.endswith(".csv"):
+                    if target_id in f and f.endswith(".csv"):
                         return os.path.join(BULK_OUTPUT_DIR, f)
-
-                # Nếu là task_id đặc biệt 'latest'
-                csv_files = [f for f in os.listdir(BULK_OUTPUT_DIR) if f.endswith(".csv")]
-                if csv_files:
-                    csv_files.sort(key=lambda f: os.path.getmtime(os.path.join(BULK_OUTPUT_DIR, f)), reverse=True)
-                    return os.path.join(BULK_OUTPUT_DIR, csv_files[0])
 
         return None
 

@@ -2,7 +2,8 @@ import os
 import sys
 import time
 import requests
-from flask import Flask, render_template, request, jsonify, send_file, Response
+import uuid
+from flask import Flask, render_template, request, jsonify, send_file, Response, session
 from dotenv import load_dotenv
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,8 +21,30 @@ except ImportError:
 from demo_flask.bulk_processor import bulk_manager
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "car-sentiment-flask-session-key-2026")
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Cho phép file lên tới 50MB
+
+def get_session_id() -> str:
+    """
+    Xác định session_id cho từng phiên truy cập:
+    1. Ưu tiên header X-Session-ID (do frontend gửi qua fetch)
+    2. Query param hoặc form data
+    3. Cookie session Flask
+    """
+    sid = request.headers.get("X-Session-ID")
+    if sid and sid.strip():
+        session["session_id"] = sid.strip()
+        return session["session_id"]
+
+    sid = request.args.get("session_id") or request.form.get("session_id")
+    if sid and sid.strip():
+        session["session_id"] = sid.strip()
+        return session["session_id"]
+
+    if "session_id" not in session:
+        session["session_id"] = "sess_" + uuid.uuid4().hex[:16]
+    return session["session_id"]
 
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/predict")
 API_BATCH_URL = os.getenv("API_BATCH_URL", "http://127.0.0.1:8000/predict_batch")
@@ -94,12 +117,14 @@ def serve_favicon():
 def index():
     api_online = check_api_alive()
     mode = "api" if api_online else "local"
-    bulk_status = bulk_manager.get_task_status()
+    sid = get_session_id()
+    bulk_status = bulk_manager.get_task_status(session_id=sid)
     return render_template(
         "index.html",
         mode=mode,
         result=None,
         input_text="",
+        session_id=sid,
         bulk_running=bulk_status.get("is_running", False)
     )
 
@@ -109,6 +134,7 @@ def predict():
     raw_text = request.form.get("text", "")
     api_online = check_api_alive()
     mode = "api" if api_online else "local"
+    sid = get_session_id()
 
     if not raw_text or not raw_text.strip():
         return render_template(
@@ -116,6 +142,7 @@ def predict():
             mode=mode,
             input_text=raw_text,
             result=None,
+            session_id=sid,
             error_msg="Vui lòng nhập văn bản! Bình luận không được để trống hoặc chỉ chứa khoảng trắng."
         )
 
@@ -130,6 +157,7 @@ def predict():
                     mode="api",
                     input_text=raw_text,
                     result=result_data,
+                    session_id=sid,
                     error_msg=None
                 )
             else:
@@ -139,6 +167,7 @@ def predict():
                     mode="api",
                     input_text=raw_text,
                     result=None,
+                    session_id=sid,
                     error_msg=f"Lỗi API (HTTP {resp.status_code}): {err_detail}"
                 )
         except Exception as e:
@@ -153,6 +182,7 @@ def predict():
             mode=mode,
             input_text=raw_text,
             result=None,
+            session_id=sid,
             error_msg="Không thể kết nối đến REST API và không khởi tạo được mô hình cục bộ."
         )
 
@@ -165,6 +195,7 @@ def predict():
             mode="local",
             input_text=raw_text,
             result=res,
+            session_id=sid,
             error_msg=None
         )
     except ValueError as ve:
@@ -173,6 +204,7 @@ def predict():
             mode="local",
             input_text=raw_text,
             result=None,
+            session_id=sid,
             error_msg=str(ve)
         )
     except Exception as e:
@@ -181,6 +213,7 @@ def predict():
             mode="local",
             input_text=raw_text,
             result=None,
+            session_id=sid,
             error_msg=f"Lỗi phân loại: {str(e)}"
         )
 
@@ -211,15 +244,16 @@ def deep_analyze():
 def bulk_upload():
     """
     Tiếp nhận file (.txt, .xlsx, .xls, .csv) để phân tích hàng loạt.
-    Kiểm tra cơ chế khóa đơn tiến trình (Single Concurrent Process).
+    Mỗi session chạy trên một worker thread riêng biệt độc lập.
     """
-    if bulk_manager.is_running:
-        status_info = bulk_manager.get_task_status()
+    sid = get_session_id()
+    if bulk_manager.is_session_running(sid):
+        status_info = bulk_manager.get_task_status(session_id=sid)
         cur_prog = f"{status_info.get('current', 0)}/{status_info.get('total', 0)}"
         return jsonify({
             "success": False,
             "busy": True,
-            "error": f"Hệ thống đang bận thực hiện 1 tiến trình phân tích khác ({cur_prog} câu). Vui lòng đợi tiến trình hiện tại chạy xong!"
+            "error": f"Phiên làm việc của bạn đang có 1 tiến trình phân tích đang chạy ({cur_prog} câu). Vui lòng đợi tiến trình hiện tại chạy xong!"
         }), 409
 
     if "file" not in request.files:
@@ -242,6 +276,7 @@ def bulk_upload():
     api_caller = call_microservice_batch if api_online else None
 
     success, msg, task_id = bulk_manager.start_task(
+        session_id=sid,
         comments=comments,
         filename=filename,
         deep_analyst=deep_analyst_flag,
@@ -257,6 +292,7 @@ def bulk_upload():
         "success": True,
         "message": msg,
         "task_id": task_id,
+        "session_id": sid,
         "total": len(comments),
         "filename": filename,
         "deep_analyst": deep_analyst_flag
@@ -264,15 +300,17 @@ def bulk_upload():
 
 @app.route("/bulk/status", methods=["GET"])
 def bulk_status():
-    """Endpoint polling trạng thái tiến trình phân tích hàng loạt"""
+    """Endpoint polling trạng thái tiến trình phân tích hàng loạt theo session"""
+    sid = get_session_id()
     task_id = request.args.get("task_id")
-    status_data = bulk_manager.get_task_status(task_id)
+    status_data = bulk_manager.get_task_status(session_id=sid, task_id=task_id)
     return jsonify(status_data)
 
 @app.route("/bulk/download/<task_id>", methods=["GET"])
 def bulk_download(task_id):
-    """Tải file CSV kết quả"""
-    csv_path = bulk_manager.get_csv_path(task_id)
+    """Tải file CSV kết quả cho session tương ứng"""
+    sid = get_session_id()
+    csv_path = bulk_manager.get_csv_path(task_id=task_id, session_id=sid)
     if not csv_path or not os.path.exists(csv_path):
         return jsonify({"error": "Không tìm thấy file kết quả hoặc file đã bị xóa."}), 404
     return send_file(
@@ -312,10 +350,11 @@ def download_sample_file(file_type):
 
 @app.route("/bulk/clear", methods=["POST"])
 def bulk_clear():
-    """Xóa trạng thái tác vụ phân tích hàng loạt đã hoàn tất để chuẩn bị tải file mới"""
-    if bulk_manager.is_running:
-        return jsonify({"success": False, "error": "Không thể xóa trạng thái khi tiến trình phân tích đang chạy."}), 400
-    bulk_manager.clear_task()
+    """Xóa trạng thái tác vụ phân tích hàng loạt của session hiện tại để chuẩn bị tải file mới"""
+    sid = get_session_id()
+    if bulk_manager.is_session_running(sid):
+        return jsonify({"success": False, "error": "Không thể xóa trạng thái khi tiến trình phân tích của bạn đang chạy."}), 400
+    bulk_manager.clear_task(session_id=sid)
     return jsonify({"success": True, "message": "Đã làm mới trạng thái sẵn sàng."})
 
 if __name__ == "__main__":

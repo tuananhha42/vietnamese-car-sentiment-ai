@@ -462,7 +462,7 @@
                             <i class="fa-solid fa-brain absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg sm:text-xl text-indigo-400"></i>
                         </div>
                         <h3 class="text-base sm:text-lg font-bold text-white">Đang kích hoạt Gemini AI phân tích chuyên sâu...</h3>
-                        <p class="text-[11px] sm:text-xs text-slate-400 mt-1 max-w-md mx-auto">Tự động luân chuyển API keys, bóc tách điểm khen/chê, sinh chiến lược Marketing và câu phản hồi mẫu</p>
+                        <p class="text-[11px] sm:text-xs text-slate-400 mt-1 max-w-md mx-auto">Bóc tách điểm khen/chê, sinh chiến lược Marketing và câu phản hồi mẫu</p>
                     </div>
                 </div>
 
@@ -477,7 +477,7 @@
                             </div>
                             <div>
                                 <h3 class="font-extrabold text-white text-sm sm:text-lg">Báo Cáo Phân Tích Chuyên Sâu (Gemini AI)</h3>
-                                <span class="text-[10px] sm:text-xs text-slate-400">Mô hình: <span class="text-purple-300 font-mono">gemini-3.1-flash-lite</span> • <span id="ai-key-used" class="text-indigo-400 font-semibold">Key #1</span></span>
+                                <span class="text-[10px] sm:text-xs text-slate-400">Mô hình: <span class="text-purple-300 font-mono">gemini-3.1-flash-lite</span><span id="ai-key-used" class="hidden"></span></span>
                             </div>
                         </div>
                     </div>
@@ -556,10 +556,10 @@
                         </p>
                     </div>
 
-                    <!-- Single Process Lock Status Badge -->
+                    <!-- Status Badge -->
                     <div id="lock-status-pill" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800/90 border border-slate-700/80 shadow-md self-start sm:self-auto">
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" id="lock-indicator-dot"></span>
-                        <span id="lock-status-text" class="text-slate-300">Single Process: Sẵn sàng</span>
+                        <span id="lock-status-text" class="text-slate-300">Hệ thống: Sẵn sàng</span>
                     </div>
                 </div>
 
@@ -696,7 +696,7 @@
                         <div>
                             <h3 class="text-sm sm:text-lg font-bold text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
                                 <span id="monitor-title">Đang phân tích dữ liệu hàng loạt...</span>
-                                <span id="monitor-tag" class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Single Process Active</span>
+                                <span id="monitor-tag" class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Đang phân tích</span>
                             </h3>
                             <span id="monitor-filename" class="text-[11px] sm:text-xs text-slate-400 font-mono">Tệp: comment_data.xlsx</span>
                         </div>
@@ -815,7 +815,7 @@
         <!-- FOOTER -->
         <footer class="text-center text-xs text-slate-500 mt-12 pb-8 space-y-1.5 border-t border-slate-800/80 pt-6">
             <p class="flex items-center justify-center gap-2 flex-wrap">
-                <span>PhoBERT Transformer</span> • <span>FastAPI Microservice</span> • <span>Gemini 3.1 Flash Lite (23 Keys Rotation)</span> • <span>Single-Process Bulk Engine</span>
+                <span>PhoBERT Transformer</span> • <span>FastAPI Microservice</span> • <span>Gemini 3.1 Flash Lite</span> • <span>Batch Inference Engine</span>
             </p>
             <p>© 2026 Vietnamese Car Comments Sentiment Intelligence System</p>
         </footer>
@@ -824,6 +824,14 @@
 
     <!-- SCRIPTS -->
     <script>
+        // ===== CLIENT SESSION ID MANAGEMENT =====
+        let clientSessionId = localStorage.getItem('car_session_id');
+        if (!clientSessionId) {
+            const serverSid = `{{ session_id or '' }}`.trim();
+            clientSessionId = serverSid || ('sess_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36));
+            localStorage.setItem('car_session_id', clientSessionId);
+        }
+
         let currentPollingTaskId = null;
         let pollingTimer = null;
 
@@ -1015,7 +1023,10 @@
             try {
                 const res = await fetch('/api/deep_analyze', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Session-ID': clientSessionId
+                    },
                     body: JSON.stringify({ text: text, sentiment: sentiment })
                 });
 
@@ -1159,6 +1170,7 @@
             formData.append('file', fileInput.files[0]);
             const deepAnalyst = document.getElementById('chk-deep-analyst').checked;
             formData.append('deep_analyst', deepAnalyst ? 'true' : 'false');
+            formData.append('session_id', clientSessionId);
 
             const btn = document.getElementById('btn-start-bulk');
             btn.disabled = true;
@@ -1167,15 +1179,17 @@
             try {
                 const res = await fetch('/bulk/upload', {
                     method: 'POST',
+                    headers: {
+                        'X-Session-ID': clientSessionId
+                    },
                     body: formData
                 });
 
                 const data = await res.json();
                 if (res.status === 409 || data.busy) {
-                    showToast(data.error || "Hệ thống đang bận chạy 1 tiến trình khác!", true);
+                    showToast(data.error || "Phiên của bạn đang bận chạy 1 tiến trình khác!", true);
                     btn.disabled = false;
                     btn.classList.remove('opacity-60', 'cursor-not-allowed');
-                    checkBulkInitialState();
                     return;
                 }
 
@@ -1211,7 +1225,11 @@
 
         async function pollStatus(taskId) {
             try {
-                const res = await fetch('/bulk/status?task_id=' + (taskId || ''));
+                const res = await fetch('/bulk/status?task_id=' + encodeURIComponent(taskId || '') + '&session_id=' + encodeURIComponent(clientSessionId), {
+                    headers: {
+                        'X-Session-ID': clientSessionId
+                    }
+                });
                 const st = await res.json();
                 updateBulkUI(st);
 
@@ -1236,18 +1254,22 @@
         }
 
         function updateBulkUI(st) {
-            // Cập nhật indicator trạng thái Single Process
+            // Cập nhật indicator trạng thái
             const dot = document.getElementById('lock-indicator-dot');
             const lockText = document.getElementById('lock-status-text');
-            if (st.is_running) {
+            if (st && st.is_running) {
                 dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping";
-                lockText.innerHTML = `Đang khóa: <span class="text-amber-300 font-bold">${st.current}/${st.total}</span>`;
+                lockText.innerHTML = `Đang xử lý: <span class="text-amber-300 font-bold">${st.current}/${st.total}</span>`;
             } else {
                 dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
-                lockText.innerText = "Single Process: Sẵn sàng";
+                lockText.innerText = "Hệ thống: Sẵn sàng";
             }
 
-            if (!st || st.status === 'idle') return;
+            if (!st || st.status === 'idle') {
+                const monitorCard = document.getElementById('bulk-monitor-card');
+                if (monitorCard) monitorCard.classList.add('hidden');
+                return;
+            }
 
             // Lưu task_id vào localStorage để khi F5 tự khôi phục
             if (st.task_id) {
@@ -1311,7 +1333,14 @@
 
         async function clearBulkTask() {
             try {
-                await fetch('/bulk/clear', { method: 'POST' });
+                await fetch('/bulk/clear', { 
+                    method: 'POST',
+                    headers: {
+                        'X-Session-ID': clientSessionId,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ session_id: clientSessionId })
+                });
             } catch (e) {
                 console.error("Clear bulk error:", e);
             }
@@ -1360,16 +1389,22 @@
                 }
             {% endif %}
 
-            // 3. Phục hồi trạng thái Phân tích hàng loạt (Bulk Analyst)
+            // 3. Phục hồi trạng thái Phân tích hàng loạt (Bulk Analyst) cho riêng session này
             const savedTaskId = localStorage.getItem('car_bulk_task_id') || '';
             try {
-                const res = await fetch('/bulk/status?task_id=' + encodeURIComponent(savedTaskId));
+                const res = await fetch('/bulk/status?task_id=' + encodeURIComponent(savedTaskId) + '&session_id=' + encodeURIComponent(clientSessionId), {
+                    headers: {
+                        'X-Session-ID': clientSessionId
+                    }
+                });
                 const st = await res.json();
                 if (st && (st.status === 'running' || st.status === 'completed')) {
                     updateBulkUI(st);
                     if (st.status === 'running') {
                         startBulkPolling(st.task_id);
                     }
+                } else {
+                    updateBulkUI({ status: 'idle', is_running: false });
                 }
             } catch (e) {
                 console.error("Lỗi phục hồi kết quả Bulk:", e);
